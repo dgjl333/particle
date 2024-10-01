@@ -1,10 +1,26 @@
 #include "Debug.h"
 #include <Windows.h>
 #include <tchar.h>
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include <vector>
 
 int windowHeight;
 int windowWidth;
 float windowSize = 0.5;
+
+struct url
+{
+
+};
+D3D_FEATURE_LEVEL levels[] = {
+	D3D_FEATURE_LEVEL_12_2,
+	D3D_FEATURE_LEVEL_12_1,
+	D3D_FEATURE_LEVEL_12_0,
+	D3D_FEATURE_LEVEL_11_1,
+	D3D_FEATURE_LEVEL_11_0,
+};
+
 
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam,LPARAM lparam)
 {
@@ -18,8 +34,41 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam,LPARAM lparam)
 
 int main()
 {
-	windowHeight = GetSystemMetrics(SM_CYSCREEN) * windowSize;
-	windowWidth = GetSystemMetrics(SM_CXSCREEN) * windowSize;
+	D3D_FEATURE_LEVEL featureLevel;
+	ID3D12Device* device = nullptr;
+	IDXGIFactory6* dxgiFactory = nullptr;
+	IDXGISwapChain4* swapChain = nullptr;
+
+	HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
+	std::vector<IDXGIAdapter*> allAdapters;
+	IDXGIAdapter* adapter = nullptr;
+	for (size_t i = 0; dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
+	{
+		allAdapters.push_back(adapter);
+	}
+
+	for (const auto& adpt : allAdapters)
+	{
+		DXGI_ADAPTER_DESC desc = {};
+		adpt->GetDesc(&desc);
+		std::wstring description = desc.Description;
+		if (description.find(L"NVIDIA") != std::string::npos)
+		{
+			adapter = adpt;
+			break;
+		}
+	}
+
+	for (D3D_FEATURE_LEVEL level : levels)
+	{
+		if (D3D12CreateDevice(adapter, level, IID_PPV_ARGS(&device)) == S_OK)
+		{
+			featureLevel = level;
+			break;
+		}
+	}
+	
+
 
 	WNDCLASSEX w = {};
 	w.cbSize = sizeof(WNDCLASSEX);
@@ -29,6 +78,7 @@ int main()
 	RegisterClassEx(&w);
 	RECT rect = { 0, 0, windowWidth, windowHeight };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
+	
 
 	HWND hwnd = CreateWindow(
 		w.lpszClassName,
@@ -48,6 +98,36 @@ int main()
 	{
 		return 0;
 	}
+
+	ID3D12CommandAllocator* cmdAllocator = nullptr;
+	ID3D12GraphicsCommandList* cmdList = nullptr;
+	ID3D12CommandQueue* cmdQueue = nullptr;
+	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
+	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
+	swapchainDesc.Width = windowWidth;
+	swapchainDesc.Height = windowHeight;
+	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapchainDesc.Stereo = false;
+	swapchainDesc.SampleDesc.Count = 1;
+	swapchainDesc.SampleDesc.Quality = 0;
+	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
+	swapchainDesc.BufferCount = 2;
+	swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
+	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	result = dxgiFactory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain);
+	cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	cmdQueueDesc.NodeMask = 0;
+	cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+	cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	result = device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
+	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
+	result = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdAllocator));
+
+
+	windowHeight = GetSystemMetrics(SM_CYSCREEN) * windowSize;
+	windowWidth = GetSystemMetrics(SM_CXSCREEN) * windowSize;
 
 	ShowWindow(hwnd, SW_SHOW);
 
