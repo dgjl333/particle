@@ -67,8 +67,6 @@ int main()
 			break;
 		}
 	}
-	
-
 
 	WNDCLASSEX w = {};
 	w.cbSize = sizeof(WNDCLASSEX);
@@ -99,11 +97,19 @@ int main()
 		return 0;
 	}
 
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;
 	ID3D12CommandQueue* cmdQueue = nullptr;
 	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
 	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
+
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	heapDesc.NodeMask = 0;
+	heapDesc.NumDescriptors = 2;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ID3D12DescriptorHeap* rtvHeaps = nullptr;
+
 	swapchainDesc.Width = windowWidth;
 	swapchainDesc.Height = windowHeight;
 	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -116,16 +122,44 @@ int main()
 	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	result = dxgiFactory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain);
+
 	cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	cmdQueueDesc.NodeMask = 0;
 	cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 	cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+	result = dxgiFactory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain);
+	result = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
 	result = device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
 	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
 	result = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdAllocator));
 
+	DXGI_SWAP_CHAIN_DESC swcDesc = {};
+	result = swapChain->GetDesc(&swcDesc);
+	std::vector<ID3D12Resource*> backBuffers(swcDesc.BufferCount);
+	for (size_t i = 0; i < swcDesc.BufferCount; i++)
+	{
+		result = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
+		D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+		handle.ptr += i * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
+	}
 
+	result = cmdAllocator->Reset();
+	unsigned int backBuferIndex = swapChain->GetCurrentBackBufferIndex();
+	
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle.ptr += backBuferIndex * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	cmdList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
+	float color[] = { 1, 0, 0, 1 };
+	cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
+	cmdList->Close();
+	ID3D12CommandList* cmdLists[] = { cmdList };
+	cmdQueue->ExecuteCommandLists(1, cmdLists);
+	cmdAllocator->Reset();
+	cmdList->Reset(cmdAllocator, nullptr);
+	swapChain->Present(1, 0);
+ 
 	windowHeight = GetSystemMetrics(SM_CYSCREEN) * windowSize;
 	windowWidth = GetSystemMetrics(SM_CXSCREEN) * windowSize;
 
