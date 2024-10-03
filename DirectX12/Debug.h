@@ -10,6 +10,15 @@ template<typename T> void print(const T& text)
 #endif
 }
 
+template<typename T, typename... Args>
+void print(const T& text, const Args&... args)
+{
+#ifdef _DEBUG
+	std::cout << text << " ";
+	print(args...);
+#endif
+}
+
 inline void EnableDebug()
 {
 #ifdef _DEBUG

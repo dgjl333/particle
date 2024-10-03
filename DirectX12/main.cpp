@@ -71,6 +71,9 @@ int main()
 		}
 	}
 
+	windowHeight = GetSystemMetrics(SM_CYSCREEN) * windowSize;
+	windowWidth = GetSystemMetrics(SM_CXSCREEN) * windowSize;
+
 	WNDCLASSEX w = {};
 	w.cbSize = sizeof(WNDCLASSEX);
 	w.lpfnWndProc = (WNDPROC)WindowProcedure;
@@ -129,7 +132,7 @@ int main()
 
 	DXGI_SWAP_CHAIN_DESC swcDesc = {};
 	result = swapChain->GetDesc(&swcDesc);
-
+	
 	std::vector<ID3D12Resource*> backBuffers(swcDesc.BufferCount);
 	for (size_t i = 0; i < swcDesc.BufferCount; i++)
 	{
@@ -142,10 +145,6 @@ int main()
 	ID3D12Fence* fence = nullptr;
 	UINT64 fenceValue = 0;
 	result = device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-
- 
-	windowHeight = GetSystemMetrics(SM_CYSCREEN) * windowSize;
-	windowWidth = GetSystemMetrics(SM_CXSCREEN) * windowSize;
 
 	ShowWindow(hwnd, SW_SHOW);
 
