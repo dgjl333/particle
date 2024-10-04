@@ -4,11 +4,27 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
+#include <d3dcompiler.h>
 #include "MathDG.h"
 
 int windowHeight;
 int windowWidth;
 float windowSize = 0.5;
+
+std::wstring GetWStringFromString(const std::string& str)
+{
+	int num = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
+	std::wstring wstr;
+	wstr.resize(num);
+
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num);
+	return wstr;
+}
+
+HRESULT D3DCompileFromFile(const std::string& pFileName, const D3D_SHADER_MACRO* pDefines, ID3DInclude* pInclude, LPCSTR pEntrypoint, LPCSTR pTarget, UINT Flags1, UINT Flags2, ID3DBlob** ppCode, ID3DBlob** ppErrorMsgs)
+{
+	return D3DCompileFromFile(GetWStringFromString(pFileName).c_str(), pDefines, pInclude, pEntrypoint, pTarget, Flags1, Flags2, ppCode, ppErrorMsgs);
+}
 
 D3D_FEATURE_LEVEL levels[] = {
 	D3D_FEATURE_LEVEL_12_2,
@@ -208,6 +224,44 @@ int main()
 			{-1,1,0},
 			{1,-1,0},
 		};
+
+		D3D12_HEAP_PROPERTIES heapProp = {};
+		heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
+		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resourceDesc.Width = sizeof(vertices);
+		resourceDesc.Height = 1;
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+		ID3D12Resource* vertBuffer = nullptr;
+
+		result = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertBuffer));
+
+		float3* vertMap = nullptr;
+		result = vertBuffer->Map(0, nullptr, (void**)&vertMap);
+		std::copy(std::begin(vertices), std::end(vertices), vertMap);
+		vertBuffer->Unmap(0, nullptr);
+
+		D3D12_VERTEX_BUFFER_VIEW vbView = {};
+		vbView.BufferLocation = vertBuffer->GetGPUVirtualAddress();
+		vbView.SizeInBytes = sizeof(vertices);
+		vbView.StrideInBytes = sizeof(vertices[0]);
+
+		ID3DBlob* vsBlob = nullptr;
+		ID3DBlob* psBlob = nullptr;
+		ID3DBlob* errorBlob = nullptr;
+
+		result = D3DCompileFromFile(L"VertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &vsBlob, &errorBlob);
+		
+
 
 	}
 	UnregisterClass(w.lpszClassName, w.hInstance);
