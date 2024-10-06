@@ -1,30 +1,19 @@
 #include "Debug.h"
 #include <Windows.h>
+#include <iostream>
 #include <tchar.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
 #include <d3dcompiler.h>
 #include "MathDG.h"
+#include "Utils.h"
+#include "Shader.h"
 
 int windowHeight;
 int windowWidth;
 float windowSize = 0.5;
 
-std::wstring GetWStringFromString(const std::string& str)
-{
-	int num = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
-	std::wstring wstr;
-	wstr.resize(num);
-
-	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num);
-	return wstr;
-}
-
-HRESULT D3DCompileFromFile(const std::string& pFileName, const D3D_SHADER_MACRO* pDefines, ID3DInclude* pInclude, LPCSTR pEntrypoint, LPCSTR pTarget, UINT Flags1, UINT Flags2, ID3DBlob** ppCode, ID3DBlob** ppErrorMsgs)
-{
-	return D3DCompileFromFile(GetWStringFromString(pFileName).c_str(), pDefines, pInclude, pEntrypoint, pTarget, Flags1, Flags2, ppCode, ppErrorMsgs);
-}
 
 D3D_FEATURE_LEVEL levels[] = {
 	D3D_FEATURE_LEVEL_12_2,
@@ -80,7 +69,7 @@ int main()
 
 	for (D3D_FEATURE_LEVEL level : levels)
 	{
-		if (D3D12CreateDevice(adapter, level, IID_PPV_ARGS(&device)) == S_OK)
+		if (SUCCEEDED(D3D12CreateDevice(adapter, level, IID_PPV_ARGS(&device))))
 		{
 			featureLevel = level;
 			break;
@@ -255,13 +244,20 @@ int main()
 		vbView.SizeInBytes = sizeof(vertices);
 		vbView.StrideInBytes = sizeof(vertices[0]);
 
-		ID3DBlob* vsBlob = nullptr;
-		ID3DBlob* psBlob = nullptr;
-		ID3DBlob* errorBlob = nullptr;
+		Shader shader("shader/VertexShader.hlsl", "shader/PixelShader.hlsl");
 
-		result = D3DCompileFromFile(L"VertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &vsBlob, &errorBlob);
-		
+		D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+			{
+				"POSITION",0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
+		};
 
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
+		pipelineDesc.pRootSignature = nullptr;
+		pipelineDesc.VS.pShaderBytecode = shader.GetVS()->GetBufferPointer();
+		pipelineDesc.VS.BytecodeLength = shader.GetVS()->GetBufferSize();
+		pipelineDesc.PS.pShaderBytecode = shader.GetPS()->GetBufferPointer();
+		pipelineDesc.PS.BytecodeLength = shader.GetPS()->GetBufferSize();
 
 	}
 	UnregisterClass(w.lpszClassName, w.hInstance);
