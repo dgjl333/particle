@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)debug</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)external</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)debug</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)external</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,15 +137,35 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="external\imgui\imgui.cpp" />
+    <ClCompile Include="external\imgui\imgui_demo.cpp" />
+    <ClCompile Include="external\imgui\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="external\imgui\imgui_tables.cpp" />
+    <ClCompile Include="external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Utils.cpp" />
+    <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Desktop\imgui-master\imgui.h" />
     <ClInclude Include="debug\Debug.h" />
+    <ClInclude Include="external\imgui\imconfig.h" />
+    <ClInclude Include="external\imgui\imgui.h" />
+    <ClInclude Include="external\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="external\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="external\imgui\imgui_internal.h" />
+    <ClInclude Include="external\imgui\imstb_rectpack.h" />
+    <ClInclude Include="external\imgui\imstb_textedit.h" />
+    <ClInclude Include="external\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\GraphicDevice.h" />
     <ClInclude Include="src\MathDG.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Utils.h" />
+    <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\PixelShader.hlsl">
