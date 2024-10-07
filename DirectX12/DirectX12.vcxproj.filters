@@ -100,4 +100,7 @@
     <FxCompile Include="shader\PixelShader.hlsl" />
     <FxCompile Include="shader\VertexShader.hlsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="font\ARIAL.TTF" />
+  </ItemGroup>
 </Project>

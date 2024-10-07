@@ -32,6 +32,8 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.Fonts->AddFontFromFileTTF(ProjectPath"font/ARIAL.TTF", 15);
+	io.Fonts->Build();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(Window::GetHWND());
@@ -230,8 +232,11 @@ int main()
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		ImGui::Begin("Performance");
-		ImGui::Text("%d FPS", (int)ImGui::GetIO().Framerate);
+		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); 
+		ImGui::SetNextWindowSize(ImVec2(100, 40), ImGuiCond_Always);
+		ImGui::Begin("FPS Counter", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
+			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground);
+		ImGui::Text("%d", (int)ImGui::GetIO().Framerate);
 		ImGui::End();
 
 		unsigned int backBuferIndex = swapChain->GetCurrentBackBufferIndex();
