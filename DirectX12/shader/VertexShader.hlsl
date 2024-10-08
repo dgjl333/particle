@@ -1,4 +1,9 @@
-float4 vert( float4 pos : POSITION ) : SV_POSITION
+#include "CommonData.hlsli"
+
+v2f vert(vertData i)
 {
-    return pos;
+    v2f o;
+    o.position = i.position;
+    o.uv = i.uv;
+    return o;
 }

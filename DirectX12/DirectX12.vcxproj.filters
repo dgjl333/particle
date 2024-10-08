@@ -103,4 +103,7 @@
   <ItemGroup>
     <Font Include="font\ARIAL.TTF" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\CommonData.hlsli" />
+  </ItemGroup>
 </Project>

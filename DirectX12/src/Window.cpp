@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Debug.h"
 #include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx12.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -40,7 +41,7 @@ void Window::OnStart(float size)
 	ShowWindow(m_hwnd, SW_SHOW);
 }
 
-void Window::OnUpdate()
+bool Window::OnUpdate()
 {
 	if (PeekMessage(&m_msg, nullptr, 0, 0, PM_REMOVE))
 	{
@@ -50,13 +51,18 @@ void Window::OnUpdate()
 
 	if (m_msg.message == WM_QUIT)
 	{
-		UnregisterClass(m_wc.lpszClassName, m_wc.hInstance);
-		exit(0);
+		return false;
 	}
+	return true;
 }
 
 void Window::OnDestroy()
 {
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+	
+	DestroyWindow(m_hwnd);
 	UnregisterClass(m_wc.lpszClassName, m_wc.hInstance);
 }
 

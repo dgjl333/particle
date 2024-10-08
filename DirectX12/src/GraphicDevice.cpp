@@ -2,6 +2,7 @@
 #include <vector>
 #include "Debug.h"
 
+
 GraphicDevice::GraphicDevice()
 {
 #ifdef _DEBUG
@@ -11,7 +12,7 @@ GraphicDevice::GraphicDevice()
 		exit(1);
 	}
 #else
-	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)))) exit(1);
+	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&m_dxgiFactory)))) exit(1);
 #endif 
 
 	std::vector<IDXGIAdapter*> allAdapters;

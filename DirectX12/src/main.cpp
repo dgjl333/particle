@@ -15,9 +15,15 @@
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx12.h"
 
-#define NUM_FRAMES_IN_FLIGHT 2
+#define NUM_BACK_BUFFERS 2
 
 const float windowSize = 0.5;
+
+struct Vertex
+{
+	float3 position;
+	float2 uv;
+};
 
 int main()
 {
@@ -43,7 +49,7 @@ int main()
 	imguiDesc.NumDescriptors = 1;
 	imguiDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	device->CreateDescriptorHeap(&imguiDesc, IID_PPV_ARGS(&imguiHeap));
-	ImGui_ImplDX12_Init(device, NUM_FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, imguiHeap, imguiHeap->GetCPUDescriptorHandleForHeapStart(), imguiHeap->GetGPUDescriptorHandleForHeapStart());
+	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM, imguiHeap, imguiHeap->GetCPUDescriptorHandleForHeapStart(), imguiHeap->GetGPUDescriptorHandleForHeapStart());
 	
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
 	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
@@ -69,7 +75,7 @@ int main()
 	swapchainDesc.SampleDesc.Count = 1;
 	swapchainDesc.SampleDesc.Quality = 0;
 	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-	swapchainDesc.BufferCount = 2;
+	swapchainDesc.BufferCount = NUM_BACK_BUFFERS;
 	swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
 	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -100,12 +106,12 @@ int main()
 	UINT64 fenceValue = 0;
 	result = device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
-	float3 vertices[] =
+	Vertex vertices[] =
 	{
-		{-0.5f, -0.5f, 0.0f} , 
-		{0.5f,  -0.5f, 0.0f} , 
-		{0.5f, 0.5f, 0.0f} ,
-		{-0.5f, 0.5f, 0.0f} ,
+		{{-0.5f, -0.5f, 0.0f}, {0,0}} ,
+		{{0.5f,  -0.5f, 0.0f} , {1,0}},
+		{{0.5f, 0.5f, 0.0f} , {1,1}},
+		{{-0.5f, 0.5f, 0.0f} , {0,1}},
 	};
 
 	unsigned int indices[] = {
@@ -138,7 +144,7 @@ int main()
 	
 	result = device->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&indexBuffer));
 
-	float3* vertMap = nullptr;
+	Vertex* vertMap = nullptr;
 	result = vertBuffer->Map(0, nullptr, (void**)&vertMap);
 	std::copy(std::begin(vertices), std::end(vertices), vertMap);
 	vertBuffer->Unmap(0, nullptr);
@@ -162,7 +168,10 @@ int main()
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{
-			"POSITION",0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		},
+		{
+			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
 		},
 	};
 
@@ -223,12 +232,13 @@ int main()
 	scissorRect.right = scissorRect.left + Window::GetWidth();
 	scissorRect.bottom = scissorRect.top + Window::GetHeight();
 
+	HANDLE fenceEvent = CreateEvent(nullptr, false, false, nullptr);
+
 	float color[] = { 0.1, 0.1, 0.1, 1 };
 
-	while (true)
+	while (Window::OnUpdate())
 	{
-		Window::OnUpdate();
-
+		
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -267,7 +277,6 @@ int main()
 		ImGui::Render();
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 
-
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		cmdList->ResourceBarrier(1, &barrierDesc);
@@ -281,19 +290,15 @@ int main()
 
 		if (fence->GetCompletedValue() != fenceValue)
 		{
-			HANDLE event = CreateEvent(nullptr, false, false, nullptr);
-			fence->SetEventOnCompletion(fenceValue, event);
-			WaitForSingleObject(event, INFINITE);
-			CloseHandle(event);
+			fence->SetEventOnCompletion(fenceValue, fenceEvent);
+			WaitForSingleObject(fenceEvent, INFINITE);
 		}
 		cmdAllocator->Reset();
 		cmdList->Reset(cmdAllocator, nullptr);
-
+		
 		swapChain->Present(1, 0);
-
 	}
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+
+	CloseHandle(fenceEvent);
 	Window::OnDestroy();
 }

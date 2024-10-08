@@ -1,4 +1,6 @@
-float4 frag() : SV_TARGET
+#include "CommonData.hlsli"
+
+float4 frag(v2f i) : SV_TARGET
 {
-    return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    return float4(i.uv, 1, 1);
 }

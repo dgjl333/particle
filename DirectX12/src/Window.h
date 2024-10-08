@@ -18,7 +18,7 @@ public:
 
 	static void OnStart(float size);
 
-	static void OnUpdate();
+	static bool OnUpdate();
 
 	static void OnDestroy();
 

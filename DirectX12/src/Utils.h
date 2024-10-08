@@ -1,12 +1,7 @@
 #pragma once
 #include <string>
 
-#ifdef _DEBUG
-	#define ProjectPath "./"
-#else
-	#define ProjectPath "../../DirectX12/"
-#endif
-
+#define ProjectPath "./"
 
 class Utils
 {
