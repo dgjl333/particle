@@ -44,16 +44,16 @@ int main()
 
 	Window::OnStart(windowSize);
 
-	//IMGUI_CHECKVERSION();
-	//ImGui::CreateContext();
-	//ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.Fonts->AddFontFromFileTTF(ProjectPath"font/ARIAL.TTF", 15);
-	//io.Fonts->Build();
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   
-	//ImGui::StyleColorsDark();
-	//ImGui_ImplWin32_Init(Window::GetHWND());
-	//ID3D12DescriptorHeap* imguiHeap = nullptr;
-	//D3D12_DESCRIPTOR_HEAP_DESC imguiDesc = {};
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.Fonts->AddFontFromFileTTF(ProjectPath"font/ARIAL.TTF", 15);
+	io.Fonts->Build();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(Window::GetHWND());
+	ID3D12DescriptorHeap* imguiHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC imguiDesc = {};
 
 
 	result = CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -63,8 +63,6 @@ int main()
 
 	result = LoadFromWICFile(L"texture/1.png", WIC_FLAGS_NONE, &metaData, scratchImg);
 	const Image* img = scratchImg.GetImage(0, 0, 0);
-
-
 
 
 
@@ -145,8 +143,6 @@ int main()
 	uploadDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
 
-
-
 	ID3D12Resource* texBuffer = nullptr;
 	result = device->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texBuffer));
 
@@ -180,15 +176,12 @@ int main()
 
 
 
+	imguiDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	imguiDesc.NumDescriptors = 1;
+	imguiDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	device->CreateDescriptorHeap(&imguiDesc, IID_PPV_ARGS(&imguiHeap));
+	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, imguiHeap, imguiHeap->GetCPUDescriptorHandleForHeapStart(), imguiHeap->GetGPUDescriptorHandleForHeapStart());
 
-
-
-	//imguiDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	//imguiDesc.NumDescriptors = 1;
-	//imguiDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	//device->CreateDescriptorHeap(&imguiDesc, IID_PPV_ARGS(&imguiHeap));
-	////ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM, imguiHeap, imguiHeap->GetCPUDescriptorHandleForHeapStart(), imguiHeap->GetGPUDescriptorHandleForHeapStart());
-	//ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM, texDescHeap, texDescHeap->GetCPUDescriptorHandleForHeapStart(), texDescHeap->GetGPUDescriptorHandleForHeapStart());
 	
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
 	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
@@ -232,13 +225,18 @@ int main()
 	DXGI_SWAP_CHAIN_DESC swcDesc = {};
 	result = swapChain->GetDesc(&swcDesc);
 
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+
 	std::vector<ID3D12Resource*> backBuffers(swcDesc.BufferCount);
 	for (size_t i = 0; i < swcDesc.BufferCount; i++)
 	{
 		result = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
 		D3D12_CPU_DESCRIPTOR_HANDLE handle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		handle.ptr += i * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
+		device->CreateRenderTargetView(backBuffers[i], &rtvDesc, handle);
 	}
 
 	ID3D12Fence* fence = nullptr;
@@ -360,7 +358,7 @@ int main()
 	pipelineDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineDesc.NumRenderTargets = 1;
-	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	pipelineDesc.SampleDesc.Count = 1;
 	pipelineDesc.SampleDesc.Quality = 0;
 
@@ -383,10 +381,7 @@ int main()
 
 	HANDLE fenceEvent = CreateEvent(nullptr, false, false, nullptr);
 
-	float color[] = { 0.1, 0.1, 0.1, 1 };
-
-
-
+	float color[] = { 0.01, 0.01, 0.01, 1 };
 
 
 
@@ -406,7 +401,7 @@ int main()
 
 	ID3D12CommandList* cmdlists[] = { cmdList };
 	cmdQueue->ExecuteCommandLists(1, cmdlists);
-	////待ち
+	
 	cmdQueue->Signal(fence, ++fenceValue);
 
 	if (fence->GetCompletedValue() != fenceValue)
@@ -416,7 +411,7 @@ int main()
 		WaitForSingleObject(event, INFINITE);
 		CloseHandle(event);
 	}
-	cmdAllocator->Reset();//キューをクリア
+	cmdAllocator->Reset();
 	cmdList->Reset(cmdAllocator, nullptr);
 
 
@@ -441,15 +436,15 @@ int main()
 	while (Window::OnUpdate())
 	{
 		
-		//ImGui_ImplDX12_NewFrame();
-		//ImGui_ImplWin32_NewFrame();
-		//ImGui::NewFrame();
-		//ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); 
-		//ImGui::SetNextWindowSize(ImVec2(100, 40), ImGuiCond_Always);
-		//ImGui::Begin("FPS Counter", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-		//	ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground);
-		//ImGui::Text("%d", (int)ImGui::GetIO().Framerate);
-		//ImGui::End();
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); 
+		ImGui::SetNextWindowSize(ImVec2(100, 40), ImGuiCond_Always);
+		ImGui::Begin("FPS Counter", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
+			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground);
+		ImGui::Text("%d", (int)ImGui::GetIO().Framerate);
+		ImGui::End();
 
 		unsigned int backBuferIndex = swapChain->GetCurrentBackBufferIndex();
 		D3D12_RESOURCE_BARRIER barrierDesc = {};
@@ -480,10 +475,10 @@ int main()
 
 		cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 
-		//cmdList->SetDescriptorHeaps(1, &imguiHeap);
+		cmdList->SetDescriptorHeaps(1, &imguiHeap);
 	
-		//ImGui::Render();
-		//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
+		ImGui::Render();
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
