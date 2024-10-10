@@ -6,7 +6,7 @@
 class Shader
 {
 public:
-	Shader(const std::string& vsSource, const std::string& psSource);
+	Shader(const std::string& filePath);
 	~Shader();
 
 	ID3DBlob* GetVS() { return m_vsBlob; }

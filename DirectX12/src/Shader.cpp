@@ -4,7 +4,7 @@
 #include <d3dcompiler.h>
 
 
-Shader::Shader(const std::string& vsSource, const std::string& psSource)
+Shader::Shader(const std::string& filePath)
 {
 #ifdef _DEBUG
 	UINT flag = D3DCOMPILE_DEBUG;
@@ -12,7 +12,7 @@ Shader::Shader(const std::string& vsSource, const std::string& psSource)
 	UINT flag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 	ID3DBlob* errorBlobVS;
-	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(ProjectPath + vsSource).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_0", flag, 0, &m_vsBlob, &errorBlobVS);
+	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(ProjectPath + filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_0", flag, 0, &m_vsBlob, &errorBlobVS);
 
 	if (FAILED(result))
 	{
@@ -35,7 +35,7 @@ Shader::Shader(const std::string& vsSource, const std::string& psSource)
 	}
 
 	ID3DBlob* errorBlobPS;
-	result = D3DCompileFromFile(Utils::GetWStringFromString(ProjectPath + psSource).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_0", flag, 0, &m_psBlob, &errorBlobPS);
+	result = D3DCompileFromFile(Utils::GetWStringFromString(ProjectPath + filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_0", flag, 0, &m_psBlob, &errorBlobPS);
 
 	if (FAILED(result))
 	{

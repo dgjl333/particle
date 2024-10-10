@@ -1,7 +1,7 @@
 #include "Window.h"
 #include "Debug.h"
+#include "GUI.h"
 #include "imgui/imgui_impl_win32.h"
-#include "imgui/imgui_impl_dx12.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -17,7 +17,7 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-void Window::OnStart(float size)
+void Window::Init(float size)
 {
 	m_height = GetSystemMetrics(SM_CYSCREEN)* size;
 	m_width = GetSystemMetrics(SM_CXSCREEN) * size;
@@ -41,7 +41,7 @@ void Window::OnStart(float size)
 	ShowWindow(m_hwnd, SW_SHOW);
 }
 
-bool Window::OnUpdate()
+bool Window::Update()
 {
 	if (PeekMessage(&m_msg, nullptr, 0, 0, PM_REMOVE))
 	{
@@ -56,12 +56,9 @@ bool Window::OnUpdate()
 	return true;
 }
 
-void Window::OnDestroy()
+void Window::Destroy()
 {
-	//ImGui_ImplDX12_Shutdown();
-	//ImGui_ImplWin32_Shutdown();
-	//ImGui::DestroyContext();
-	
+	GUI::Destroy();
 	DestroyWindow(m_hwnd);
 	UnregisterClass(m_wc.lpszClassName, m_wc.hInstance);
 }

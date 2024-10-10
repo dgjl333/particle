@@ -16,11 +16,11 @@ public:
 	Window() = delete;
 	~Window() = delete;
 
-	static void OnStart(float size);
+	static void Init(float size);
 
-	static bool OnUpdate();
+	static bool Update();
 
-	static void OnDestroy();
+	static void Destroy();
 
 	static int GetWidth() { return m_width; }
 	static int GetHeight() { return m_height;}

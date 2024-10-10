@@ -11,12 +11,9 @@
 #include "Shader.h"
 #include "Window.h"
 #include "GraphicDevice.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
-#include "imgui/imgui_impl_dx12.h"
 #include "DirectXTex/DirectXTex.h"
-
-#define NUM_BACK_BUFFERS 2
+#include "Utils.h"
+#include "GUI.h"
 
 using namespace DirectX;
 const float windowSize = 0.5;
@@ -42,18 +39,9 @@ int main()
 	GraphicDevice graphicDevice;
 	ID3D12Device* device = graphicDevice.GetDevice();
 
-	Window::OnStart(windowSize);
+	Window::Init(windowSize);
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.Fonts->AddFontFromFileTTF(ProjectPath"font/ARIAL.TTF", 15);
-	io.Fonts->Build();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(Window::GetHWND());
-	ID3D12DescriptorHeap* imguiHeap = nullptr;
-	D3D12_DESCRIPTOR_HEAP_DESC imguiDesc = {};
+	GUI::Init(device);
 
 
 	result = CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -63,7 +51,6 @@ int main()
 
 	result = LoadFromWICFile(L"texture/1.png", WIC_FLAGS_NONE, &metaData, scratchImg);
 	const Image* img = scratchImg.GetImage(0, 0, 0);
-
 
 
 	D3D12_DESCRIPTOR_RANGE descRange = {};
@@ -172,16 +159,6 @@ int main()
 	texDestLocation.pResource = texBuffer;
 	texDestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 	texDestLocation.SubresourceIndex = 0;
-
-
-
-
-	imguiDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	imguiDesc.NumDescriptors = 1;
-	imguiDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	device->CreateDescriptorHeap(&imguiDesc, IID_PPV_ARGS(&imguiHeap));
-	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, imguiHeap, imguiHeap->GetCPUDescriptorHandleForHeapStart(), imguiHeap->GetGPUDescriptorHandleForHeapStart());
-
 	
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
 	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
@@ -302,12 +279,7 @@ int main()
 	ibView.SizeInBytes = sizeof(indices);
 
 
-
-
-
-
-
-	Shader shader("shader/VertexShader.hlsl", "shader/PixelShader.hlsl");
+	Shader shader("shader/Basic.hlsl");
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{
@@ -384,8 +356,6 @@ int main()
 	float color[] = { 0.01, 0.01, 0.01, 1 };
 
 
-
-
 	cmdList->CopyTextureRegion(&texDestLocation, 0, 0, 0, &texCopyLocation, nullptr);
 
 	D3D12_RESOURCE_BARRIER texBarrierDesc = {};
@@ -433,18 +403,9 @@ int main()
 	device->CreateShaderResourceView(texBuffer, &srvDesc, texDescHeap->GetCPUDescriptorHandleForHeapStart());
 
 
-	while (Window::OnUpdate())
+	while (Window::Update())
 	{
-		
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); 
-		ImGui::SetNextWindowSize(ImVec2(100, 40), ImGuiCond_Always);
-		ImGui::Begin("FPS Counter", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
-			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground);
-		ImGui::Text("%d", (int)ImGui::GetIO().Framerate);
-		ImGui::End();
+		GUI::Update();
 
 		unsigned int backBuferIndex = swapChain->GetCurrentBackBufferIndex();
 		D3D12_RESOURCE_BARRIER barrierDesc = {};
@@ -475,10 +436,7 @@ int main()
 
 		cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 
-		cmdList->SetDescriptorHeaps(1, &imguiHeap);
-	
-		ImGui::Render();
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
+		GUI::Render(cmdList);
 
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -503,5 +461,5 @@ int main()
 	}
 
 	CloseHandle(fenceEvent);
-	Window::OnDestroy();
+	Window::Destroy();
 }
