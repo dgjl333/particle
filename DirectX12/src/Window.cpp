@@ -58,9 +58,9 @@ bool Window::OnUpdate()
 
 void Window::OnDestroy()
 {
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	//ImGui_ImplDX12_Shutdown();
+	//ImGui_ImplWin32_Shutdown();
+	//ImGui::DestroyContext();
 	
 	DestroyWindow(m_hwnd);
 	UnregisterClass(m_wc.lpszClassName, m_wc.hInstance);

@@ -95,6 +95,9 @@
     <ClInclude Include="external\imgui\imstb_rectpack.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="external\DirectXTex\DirectXTex.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\PixelShader.hlsl" />
@@ -105,5 +108,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\CommonData.hlsli" />
+    <None Include="external\DirectXTex\DirectXTex.inl">
+      <Filter>ヘッダー ファイル</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\Release\DirectXTex.lib" />
   </ItemGroup>
 </Project>
