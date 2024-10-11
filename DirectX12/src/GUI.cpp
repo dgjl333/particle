@@ -4,13 +4,16 @@
 #include "imgui/imgui_impl_dx12.h"
 #include "Utils.h"
 #include "Window.h"
+#include "GraphicDevice.h"
 
-void GUI::Init(ID3D12Device* device)
+ID3D12DescriptorHeap* GUI::m_descriptorHeap = nullptr;
+
+void GUI::Init()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.Fonts->AddFontFromFileTTF(ProjectPath"font/ARIAL.TTF", 15);
+	io.Fonts->AddFontFromFileTTF("font/ARIAL.TTF", 15);
 	io.Fonts->Build();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::StyleColorsDark();
@@ -21,6 +24,7 @@ void GUI::Init(ID3D12Device* device)
 	heapDesc.NumDescriptors = 1;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
+	ID3D12Device* device = GraphicDevice::GetDevice();
 	device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descriptorHeap));
 	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, m_descriptorHeap, m_descriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 }
@@ -57,4 +61,3 @@ void GUI::Destroy()
 	}
 }
 
-ID3D12DescriptorHeap* GUI::m_descriptorHeap = nullptr; 

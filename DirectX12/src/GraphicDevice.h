@@ -7,13 +7,13 @@ class GraphicDevice
 private:
 	static D3D_FEATURE_LEVEL levels[5];
 
-	ID3D12Device* m_device = nullptr;
-	IDXGIFactory6* m_dxgiFactory = nullptr;
+	static ID3D12Device* m_device;
+	static IDXGIFactory6* m_dxgiFactory;
 
 public:
-	GraphicDevice();
-	~GraphicDevice();
+	static void Init();
+	static void Destroy();
 
-	ID3D12Device* GetDevice() { return m_device; }
-	IDXGIFactory6* GetFactory() { return m_dxgiFactory; }
+	static ID3D12Device* GetDevice() { return  m_device; }
+	static IDXGIFactory6* GetFactory() { return m_dxgiFactory; }
 };

@@ -3,7 +3,6 @@
 #include <Windows.h>
 
 #define NUM_BACK_BUFFERS 2
-#define ProjectPath "./"
 
 namespace Utils
 {

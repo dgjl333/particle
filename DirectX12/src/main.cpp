@@ -14,6 +14,10 @@
 #include "DirectXTex/DirectXTex.h"
 #include "Utils.h"
 #include "GUI.h"
+#include <wrl/client.h> 
+#include "Renderer.h"
+
+using Microsoft::WRL::ComPtr;
 
 using namespace DirectX;
 const float windowSize = 0.5;
@@ -36,13 +40,16 @@ int main()
 	EnableDebug();
 	HRESULT result;
 
-	GraphicDevice graphicDevice;
-	ID3D12Device* device = graphicDevice.GetDevice();
+	GraphicDevice::Init();
+
+	ID3D12Device* device = GraphicDevice::GetDevice();
 
 	Window::Init(windowSize);
 
-	GUI::Init(device);
+	GUI::Init();
 
+	Renderer::Init();
+	ID3D12GraphicsCommandList* cmdList = Renderer::GetCommandList();
 
 	result = CoInitializeEx(0, COINIT_MULTITHREADED);
 	
@@ -75,7 +82,6 @@ int main()
 	samplerDesc.MinLOD = 0.0f;
 	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-
 
 	D3D12_HEAP_PROPERTIES uploadProp = {};
 	uploadProp.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -113,7 +119,6 @@ int main()
 	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 
-
 	D3D12_HEAP_PROPERTIES texHeapProp = {};
 	texHeapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
 	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -128,7 +133,6 @@ int main()
 	uploadDesc.MipLevels = metaData.mipLevels;
 	uploadDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
 	uploadDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-
 
 	ID3D12Resource* texBuffer = nullptr;
 	result = device->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texBuffer));
@@ -160,66 +164,6 @@ int main()
 	texDestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 	texDestLocation.SubresourceIndex = 0;
 	
-	ID3D12CommandAllocator* cmdAllocator = nullptr;
-	result = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
-
-	ID3D12GraphicsCommandList* cmdList = nullptr;
-	result = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList));
-
-	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-	cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	cmdQueueDesc.NodeMask = 0;
-	cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-	cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-	ID3D12CommandQueue* cmdQueue = nullptr;
-	result = device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
-
-	IDXGISwapChain4* swapChain = nullptr;
-	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
-	swapchainDesc.Width = Window::GetWidth();
-	swapchainDesc.Height = Window::GetHeight();
-	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapchainDesc.Stereo = false;
-	swapchainDesc.SampleDesc.Count = 1;
-	swapchainDesc.SampleDesc.Quality = 0;
-	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-	swapchainDesc.BufferCount = NUM_BACK_BUFFERS;
-	swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	result = graphicDevice.GetFactory()->CreateSwapChainForHwnd(cmdQueue, Window::GetHWND(), &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain);
-
-	ID3D12DescriptorHeap* descriptorHeap = nullptr;
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = 2;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	result = device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap));
-
-	DXGI_SWAP_CHAIN_DESC swcDesc = {};
-	result = swapChain->GetDesc(&swcDesc);
-
-	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-
-
-	std::vector<ID3D12Resource*> backBuffers(swcDesc.BufferCount);
-	for (size_t i = 0; i < swcDesc.BufferCount; i++)
-	{
-		result = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
-		D3D12_CPU_DESCRIPTOR_HANDLE handle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-		handle.ptr += i * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		device->CreateRenderTargetView(backBuffers[i], &rtvDesc, handle);
-	}
-
-	ID3D12Fence* fence = nullptr;
-	UINT64 fenceValue = 0;
-	result = device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-
 	Vertex vertices[] =
 	{
 		{{-0.5f, -0.5f, 0.0f}, {0,0}} ,
@@ -277,7 +221,6 @@ int main()
 	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R32_UINT;
 	ibView.SizeInBytes = sizeof(indices);
-
 
 	Shader shader("shader/Basic.hlsl");
 
@@ -337,25 +280,6 @@ int main()
 	ID3D12PipelineState* pipelineState = nullptr;
 	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 
-	D3D12_VIEWPORT viewport = {};
-	viewport.Width = Window::GetWidth();
-	viewport.Height = Window::GetHeight();
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1;
-
-	D3D12_RECT scissorRect = {};
-	scissorRect.top = 0;
-	scissorRect.left = 0;
-	scissorRect.right = scissorRect.left + Window::GetWidth();
-	scissorRect.bottom = scissorRect.top + Window::GetHeight();
-
-	HANDLE fenceEvent = CreateEvent(nullptr, false, false, nullptr);
-
-	float color[] = { 0.01, 0.01, 0.01, 1 };
-
-
 	cmdList->CopyTextureRegion(&texDestLocation, 0, 0, 0, &texCopyLocation, nullptr);
 
 	D3D12_RESOURCE_BARRIER texBarrierDesc = {};
@@ -366,24 +290,8 @@ int main()
 	texBarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
 	texBarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-	cmdList->ResourceBarrier(1, &texBarrierDesc);
-	cmdList->Close();
-
-	ID3D12CommandList* cmdlists[] = { cmdList };
-	cmdQueue->ExecuteCommandLists(1, cmdlists);
-	
-	cmdQueue->Signal(fence, ++fenceValue);
-
-	if (fence->GetCompletedValue() != fenceValue)
-	{
-		auto event = CreateEvent(nullptr, false, false, nullptr);
-		fence->SetEventOnCompletion(fenceValue, event);
-		WaitForSingleObject(event, INFINITE);
-		CloseHandle(event);
-	}
-	cmdAllocator->Reset();
-	cmdList->Reset(cmdAllocator, nullptr);
-
+	Renderer::ExecuteCommands(texBarrierDesc);
+	Renderer::WaitForFrame();
 
 	ID3D12DescriptorHeap* texDescHeap = nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC  texDescHeapDesc = {};
@@ -406,26 +314,9 @@ int main()
 	while (Window::Update())
 	{
 		GUI::Update();
+		Renderer::Update();
 
-		unsigned int backBuferIndex = swapChain->GetCurrentBackBufferIndex();
-		D3D12_RESOURCE_BARRIER barrierDesc = {};
-		barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrierDesc.Transition.pResource = backBuffers[backBuferIndex];
-		barrierDesc.Transition.Subresource = 0;
-		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		cmdList->ResourceBarrier(1, &barrierDesc);
-
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += backBuferIndex * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		cmdList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
-		cmdList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
 		cmdList->SetPipelineState(pipelineState);
-		cmdList->RSSetViewports(1, &viewport);
-		cmdList->RSSetScissorRects(1, &scissorRect);
-
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		cmdList->IASetVertexBuffers(0, 1, &vbView);
 		cmdList->IASetIndexBuffer(&ibView);
@@ -438,28 +329,12 @@ int main()
 
 		GUI::Render(cmdList);
 
-		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		cmdList->ResourceBarrier(1, &barrierDesc);
-
-		cmdList->Close();
-
-		ID3D12CommandList* cmdLists[] = { cmdList };
-		cmdQueue->ExecuteCommandLists(1, cmdLists);
-
-		cmdQueue->Signal(fence, ++fenceValue);
-
-		if (fence->GetCompletedValue() != fenceValue)
-		{
-			fence->SetEventOnCompletion(fenceValue, fenceEvent);
-			WaitForSingleObject(fenceEvent, INFINITE);
-		}
-		cmdAllocator->Reset();
-		cmdList->Reset(cmdAllocator, nullptr);
-		
-		swapChain->Present(1, 0);
+		Renderer::ExecuteCommands();
+		Renderer::WaitForFrame();
+		Renderer::Render();
 	}
 
-	CloseHandle(fenceEvent);
+	Renderer::Destroy();
+	GraphicDevice::Destroy();
 	Window::Destroy();
 }

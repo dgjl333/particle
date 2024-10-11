@@ -2,8 +2,10 @@
 #include <vector>
 #include "Debug.h"
 
+ID3D12Device* GraphicDevice::m_device = nullptr;
+IDXGIFactory6* GraphicDevice::m_dxgiFactory = nullptr;
 
-GraphicDevice::GraphicDevice()
+void GraphicDevice::Init()
 {
 #ifdef _DEBUG
 	if (FAILED(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory))))
@@ -43,10 +45,10 @@ GraphicDevice::GraphicDevice()
 	}
 }
 
-GraphicDevice::~GraphicDevice()
+void GraphicDevice::Destroy()
 {
-	m_device->Release();
-	m_dxgiFactory->Release();
+	if(m_device) m_device->Release();
+	if(m_dxgiFactory) m_dxgiFactory->Release();
 }
 
 D3D_FEATURE_LEVEL GraphicDevice::levels[5] = {
@@ -56,4 +58,5 @@ D3D_FEATURE_LEVEL GraphicDevice::levels[5] = {
    D3D_FEATURE_LEVEL_11_1,
    D3D_FEATURE_LEVEL_11_0,
 };
+
 
