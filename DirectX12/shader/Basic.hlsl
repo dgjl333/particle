@@ -1,9 +1,16 @@
 #include "CommonData.hlsli"
 
+struct Matrix
+{
+    matrix mat;
+};
+ConstantBuffer<Matrix> m:register(b0);
+
+
 v2f vert(vertData i)
 {
     v2f o;
-    o.position = i.position;
+    o.position = mul(m.mat, i.position);
     o.uv = i.uv;
     return o;
 }

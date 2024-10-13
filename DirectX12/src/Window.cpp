@@ -19,8 +19,10 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void Window::Init(float size)
 {
-	m_height = GetSystemMetrics(SM_CYSCREEN)* size;
-	m_width = GetSystemMetrics(SM_CXSCREEN) * size;
+	//m_height = GetSystemMetrics(SM_CYSCREEN)* size;
+	//m_width = GetSystemMetrics(SM_CXSCREEN) * size;
+	m_height = 1080 * size;
+	m_width = 1920 * size;
 
 	m_wc.cbSize = sizeof(WNDCLASSEX);
 	m_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;

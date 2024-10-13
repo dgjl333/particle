@@ -109,9 +109,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shader\Basic.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
     <Font Include="font\ARIAL.TTF" />
   </ItemGroup>
   <ItemGroup>
@@ -122,5 +119,8 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\Release\DirectXTex.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\Basic.hlsl" />
   </ItemGroup>
 </Project>
