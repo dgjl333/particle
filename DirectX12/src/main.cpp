@@ -1,39 +1,28 @@
 #include "Debug.h"
 #include <Windows.h>
-#include <iostream>
-#include <tchar.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
-#include <d3dcompiler.h>
-#include "MathDG.h"
+#include "CommonData.h"
 #include "Utils.h"
 #include "Shader.h"
 #include "Window.h"
 #include "GraphicDevice.h"
-#include "DirectXTex/DirectXTex.h"
 #include "Utils.h"
 #include "GUI.h"
-#include <wrl/client.h> 
 #include "Renderer.h"
-
-using Microsoft::WRL::ComPtr;
+#include "Texture.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 using namespace DirectX;
 const float windowSize = 1;
-
-
-struct Vertex
-{
-	float3 position;
-	float2 uv;
-};
 
 int main()
 {
 	EnableDebug();
 	HRESULT result;
-
+	
 	GraphicDevice::Init();
 
 	ID3D12Device* device = GraphicDevice::GetDevice();
@@ -45,13 +34,8 @@ int main()
 	Renderer::Init();
 	ID3D12GraphicsCommandList* cmdList = Renderer::GetCommandList();
 
-	result = CoInitializeEx(0, COINIT_MULTITHREADED);
-	
-	TexMetadata metaData = {};
-	ScratchImage scratchImg = {};
-
-	result = LoadFromWICFile(L"texture/1.png", WIC_FLAGS_NONE, &metaData, scratchImg);
-	const Image* img = scratchImg.GetImage(0, 0, 0);
+	Texture::Init();
+	Texture texture("texture/1.png");
 
 	D3D12_DESCRIPTOR_RANGE descRanges[2] = {};
 	descRanges[0].NumDescriptors = 1;
@@ -70,125 +54,20 @@ int main()
 	rootParam.DescriptorTable.pDescriptorRanges = descRanges;
 	rootParam.DescriptorTable.NumDescriptorRanges = 2;
 
-	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-	samplerDesc.MinLOD = 0.0f;
-	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-
-	ID3D12Resource* uploadBuffer = nullptr;
-	UINT64 width = Utils::AlignSize256(img->rowPitch) * img->height;
-	D3D12_RESOURCE_DESC uploadResourceDesc = Utils::ResourceDesc(width);
-	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
-
-	D3D12_RESOURCE_DESC textureDesc = {};
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.Width = metaData.width;
-	textureDesc.Height = metaData.height;
-	textureDesc.DepthOrArraySize = metaData.arraySize;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.MipLevels = metaData.mipLevels;
-	textureDesc.Dimension = (D3D12_RESOURCE_DIMENSION)metaData.dimension;
-	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-	D3D12_HEAP_PROPERTIES texHeapProp = {};
-	texHeapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
-	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	texHeapProp.CreationNodeMask = 0;
-	texHeapProp.VisibleNodeMask = 0;
-
-	D3D12_RESOURCE_DESC uploadDesc = {};
-	uploadDesc.Format = metaData.format;
-	uploadDesc.Width = metaData.width;
-	uploadDesc.Height = metaData.height;
-	uploadDesc.DepthOrArraySize = metaData.arraySize;
-	uploadDesc.MipLevels = metaData.mipLevels;
-	uploadDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
-	uploadDesc.SampleDesc.Count = 1;
-	uploadDesc.SampleDesc.Quality = 0;
-	uploadDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-
-	ID3D12Resource* texBuffer = nullptr;
-	result = device->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texBuffer));
-
-	uint8_t* imageMap = nullptr;
-	result = uploadBuffer->Map(0, nullptr, (void**)&imageMap);
-	auto rowPitch = Utils::AlignSize256(img->rowPitch);
-	auto srcAddress = img->pixels;
-	for (int i = 0; i < img->height; i++)
-	{
-		std::copy_n(srcAddress, rowPitch, imageMap);
-		srcAddress += img->rowPitch;
-		imageMap += rowPitch;
-	}
-	uploadBuffer->Unmap(0, nullptr);
-
-	D3D12_TEXTURE_COPY_LOCATION texCopyLocation = {};
-	texCopyLocation.pResource = uploadBuffer;
-	texCopyLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-	texCopyLocation.PlacedFootprint.Offset = 0;
-	texCopyLocation.PlacedFootprint.Footprint.Width = metaData.width;
-	texCopyLocation.PlacedFootprint.Footprint.Height = metaData.height;
-	texCopyLocation.PlacedFootprint.Footprint.Depth = metaData.depth;
-	texCopyLocation.PlacedFootprint.Footprint.RowPitch = Utils::AlignSize256(img->rowPitch);
-	texCopyLocation.PlacedFootprint.Footprint.Format = img->format;
-
-	D3D12_TEXTURE_COPY_LOCATION texDestLocation = {};
-	texDestLocation.pResource = texBuffer;
-	texDestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-	texDestLocation.SubresourceIndex = 0;
-	
-	Vertex vertices[] =
-	{
-		{{0.0f, 500.0f, 0.0f}, {0,0}} ,
-		{{500.0f,  500.0f, 0.0f} , {1,0}},
-		{{500.0f, 0.0f, 0.0f} , {1,1}},
-		{{0.0f, 0.0f, 0.0f} , {0,1}},
+	std::vector<Vertex> vertices = {
+		{{0.0f, 500.0f, 0.0f}, {0, 0}},
+		{{500.0f, 500.0f, 0.0f}, {1, 0}},
+		{{500.0f, 0.0f, 0.0f}, {1, 1}},
+		{{0.0f, 0.0f, 0.0f}, {0, 1}}
 	};
 
-	unsigned int indices[] = {
+	std::vector<unsigned int> indices = {
 		0,1,2,
 		0,2,3
 	};
-
-	D3D12_RESOURCE_DESC resourceDesc = Utils::ResourceDesc(sizeof(vertices));
-
-	ID3D12Resource* vertBuffer = nullptr;
-	ID3D12Resource* indexBuffer = nullptr;
-
-	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertBuffer));
-
-	resourceDesc.Width = sizeof(indices);
 	
-	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&indexBuffer));
-
-	Vertex* vertMap = nullptr;
-	result = vertBuffer->Map(0, nullptr, (void**)&vertMap);
-	std::copy(std::begin(vertices), std::end(vertices), vertMap);
-	vertBuffer->Unmap(0, nullptr);
-
-	unsigned int* indexMap = nullptr;
-	indexBuffer->Map(0, nullptr, (void**)&indexMap);
-	std::copy(std::begin(indices), std::end(indices), indexMap);
-	indexBuffer->Unmap(0, nullptr);
-
-	D3D12_VERTEX_BUFFER_VIEW vbView = {};
-	vbView.BufferLocation = vertBuffer->GetGPUVirtualAddress();
-	vbView.SizeInBytes = sizeof(vertices);
-	vbView.StrideInBytes = sizeof(vertices[0]);
-
-	D3D12_INDEX_BUFFER_VIEW ibView = {};
-	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-	ibView.Format = DXGI_FORMAT_R32_UINT;
-	ibView.SizeInBytes = sizeof(indices);
+	VertexBuffer vb(vertices);
+	IndexBuffer ib(indices);
 
 	Shader shader("shader/Basic.hlsl");
 
@@ -206,7 +85,7 @@ int main()
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootSignatureDesc.pParameters = &rootParam;
 	rootSignatureDesc.NumParameters = 1;
-	rootSignatureDesc.pStaticSamplers = &samplerDesc;
+	rootSignatureDesc.pStaticSamplers = &texture.GetSamplerDescription();
 	rootSignatureDesc.NumStaticSamplers = 1;
 	ID3D10Blob* rootSigatureBlob = nullptr;
 	ID3D10Blob* errorBlob = nullptr;
@@ -248,20 +127,6 @@ int main()
 	ID3D12PipelineState* pipelineState = nullptr;
 	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 
-	cmdList->CopyTextureRegion(&texDestLocation, 0, 0, 0, &texCopyLocation, nullptr);
-
-	D3D12_RESOURCE_BARRIER texBarrierDesc = {};
-	texBarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	texBarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	texBarrierDesc.Transition.pResource = texBuffer;
-	texBarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	texBarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-	texBarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-	Renderer::ExecuteCommands(texBarrierDesc);
-	Renderer::WaitForFrame();
-	uploadBuffer->Release();
-
 	ID3D12DescriptorHeap* srvDescHeap = nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC  srvHeapDesc = {};
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -270,12 +135,6 @@ int main()
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
 	result = device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvDescHeap));
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = metaData.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
 
 	XMMATRIX matrix = XMMatrixIdentity();
 	matrix.r[0].m128_f32[0] = 2.0f / Window::GetWidth();
@@ -293,7 +152,7 @@ int main()
 	constBuffer->Unmap(0, nullptr);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE srvHeapHanlde = srvDescHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CreateShaderResourceView(texBuffer, &srvDesc, srvHeapHanlde);
+	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), srvHeapHanlde);
 
 	srvHeapHanlde.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -310,14 +169,14 @@ int main()
 
 		cmdList->SetPipelineState(pipelineState);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		cmdList->IASetVertexBuffers(0, 1, &vbView);
-		cmdList->IASetIndexBuffer(&ibView);
+		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
+		cmdList->IASetIndexBuffer(&ib.GetView());
 
 		cmdList->SetGraphicsRootSignature(rootsignature);
 		cmdList->SetDescriptorHeaps(1, &srvDescHeap);
 		cmdList->SetGraphicsRootDescriptorTable(0, srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-		cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
+		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
 		GUI::Render(cmdList);
 

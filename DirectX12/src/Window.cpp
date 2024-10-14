@@ -21,7 +21,7 @@ void Window::Init(float size)
 {
 	//m_height = GetSystemMetrics(SM_CYSCREEN)* size;
 	//m_width = GetSystemMetrics(SM_CXSCREEN) * size;
-	m_height = 1080 * size;
+	m_height = 1080 * size;         //set a fixed size for now
 	m_width = 1920 * size;
 
 	m_wc.cbSize = sizeof(WNDCLASSEX);

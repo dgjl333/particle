@@ -3,7 +3,6 @@
 #include "GraphicDevice.h"
 #include <vector>
 
-
 ComPtr<ID3D12Device> Renderer::m_device = nullptr;
 ComPtr<ID3D12DescriptorHeap> Renderer::m_rtvHeap = nullptr;
 ComPtr<ID3D12CommandAllocator> Renderer::m_cmdAllocator = nullptr;
@@ -18,7 +17,6 @@ D3D12_VIEWPORT Renderer::m_viewPort = {};
 D3D12_RECT Renderer::m_scissorRect = {};
 D3D12_RESOURCE_BARRIER Renderer::m_barrierRtv = {};
 D3D12_RESOURCE_BARRIER Renderer::m_barrierPresent = {};
-
 
 void Renderer::Init()
 {

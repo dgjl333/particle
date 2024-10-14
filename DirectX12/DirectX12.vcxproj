@@ -162,9 +162,12 @@
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\GUI.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\IndexBuffer.cpp" />
+    <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\VertexBuffer.cpp" />
     <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -180,10 +183,13 @@
     <ClInclude Include="external\imgui\imstb_truetype.h" />
     <ClInclude Include="src\GraphicDevice.h" />
     <ClInclude Include="src\GUI.h" />
-    <ClInclude Include="src\MathDG.h" />
+    <ClInclude Include="src\CommonData.h" />
+    <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\Utils.h" />
+    <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>

@@ -27,8 +27,6 @@ private:
 
 	static constexpr float m_backgroundColor[4] = {0.01, 0.01, 0.01, 1};
 
-
-
 public:
 	static void Init();
 	static void Update();
