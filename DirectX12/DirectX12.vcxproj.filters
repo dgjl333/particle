@@ -63,6 +63,12 @@
     <ClCompile Include="src\IndexBuffer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\Random.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Time.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommonData.h">
@@ -125,6 +131,12 @@
     <ClInclude Include="src\IndexBuffer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Random.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Time.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Font Include="font\ARIAL.TTF" />
@@ -140,5 +152,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\Basic.hlsl" />
+    <FxCompile Include="shader\Test.hlsl" />
   </ItemGroup>
 </Project>

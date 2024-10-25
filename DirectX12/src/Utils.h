@@ -8,7 +8,7 @@ namespace Utils
 {
 	 inline UINT64 AlignSize256(UINT64 size)
 	{
-		 return (size+ 0xff) & ~0xff;
+		 return (size+ 255) & ~255;
 	}
 
 
@@ -20,7 +20,15 @@ namespace Utils
 		0                                       // VisibleNodeMask
 	};
 
-	 inline D3D12_RESOURCE_DESC ResourceDesc(UINT64 width)
+	inline D3D12_HEAP_PROPERTIES heapPropertiesDefault = {
+		D3D12_HEAP_TYPE_DEFAULT,               
+		D3D12_CPU_PAGE_PROPERTY_UNKNOWN,      
+		D3D12_MEMORY_POOL_UNKNOWN,            
+		0,                                    
+		0                                      
+	};
+
+	 inline D3D12_RESOURCE_DESC ResourceDesc(UINT64 width, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
 	{
 		D3D12_RESOURCE_DESC desc = {};
 		desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -30,11 +38,23 @@ namespace Utils
 		desc.DepthOrArraySize = 1;
 		desc.MipLevels = 1;
 		desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		desc.Flags = flags;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		return desc;
 	}
+
+	 inline D3D12_RESOURCE_BARRIER ResourceBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+	 {
+		 D3D12_RESOURCE_BARRIER barrier = {};
+		 barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		 barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		 barrier.Transition.pResource = pResource;
+		 barrier.Transition.StateBefore = before;
+		 barrier.Transition.StateAfter = after;
+		 barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		 return barrier;
+	 }
 
 	inline std::wstring GetWStringFromString(const std::string& str)
 	{

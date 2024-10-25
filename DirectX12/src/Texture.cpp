@@ -38,15 +38,9 @@ Texture::Texture(const std::string& filePath) :
 
 	Upload(img, uploadBuffer);
 
-	D3D12_RESOURCE_BARRIER texBarrierDesc = {};
-	texBarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	texBarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	texBarrierDesc.Transition.pResource = m_buffer;
-	texBarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	texBarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-	texBarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::ResourceBarrier(m_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	Renderer::ExecuteCommands(texBarrierDesc);
+	Renderer::ExecuteCommands(&texBarrierDesc);
 	Renderer::WaitForFrame();
 	uploadBuffer->Release();
 }

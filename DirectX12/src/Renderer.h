@@ -30,7 +30,7 @@ private:
 public:
 	static void Init();
 	static void Update();
-	static void ExecuteCommands(const D3D12_RESOURCE_BARRIER& barrier = m_barrierPresent);
+	static void ExecuteCommands(D3D12_RESOURCE_BARRIER* barrier = &m_barrierPresent);
 	static void Render();
 	static void WaitForFrame();
 	static void Destroy();

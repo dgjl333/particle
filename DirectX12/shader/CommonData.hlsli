@@ -11,3 +11,10 @@ struct v2f
     float2 uv : TEXCOORD0;
 };
 
+cbuffer CommonInput : register(b0)
+{
+    float4x4 _projectionMatrix;
+    float4 _Time;
+    float _DeltaTime;
+};
+

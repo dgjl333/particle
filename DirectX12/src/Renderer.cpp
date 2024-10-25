@@ -88,17 +88,8 @@ void Renderer::Init()
 	m_scissorRect.right = m_scissorRect.left + Window::GetWidth();
 	m_scissorRect.bottom = m_scissorRect.top + Window::GetHeight();
 
-	m_barrierRtv.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	m_barrierRtv.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	m_barrierRtv.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	m_barrierRtv.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_barrierRtv.Transition.Subresource = 0;
-
-	m_barrierPresent.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	m_barrierPresent.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	m_barrierPresent.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_barrierPresent.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	m_barrierPresent.Transition.Subresource = 0;
+	m_barrierRtv = Utils::ResourceBarrier(nullptr, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_barrierPresent = Utils::ResourceBarrier(nullptr, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void Renderer::Update()
@@ -117,9 +108,12 @@ void Renderer::Update()
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 }
 
-void Renderer::ExecuteCommands(const D3D12_RESOURCE_BARRIER& barrier)
+void Renderer::ExecuteCommands(D3D12_RESOURCE_BARRIER* barrier)
 {
-	m_cmdList->ResourceBarrier(1, &barrier);
+	if (barrier)
+	{
+		m_cmdList->ResourceBarrier(1, barrier);
+	}
 
 	m_cmdList->Close();
 
