@@ -2,26 +2,26 @@
 
 struct Matrix
 {
-    matrix mat;
+    float4 color;
 };
-ConstantBuffer<Matrix> m:register(b0);
+ConstantBuffer<Matrix> m:register(b1);
 
 
 v2f vert(vertData i)
 {
     v2f o;
-    o.position = mul(m.mat, i.position);
+    o.position = mul(_projectionMatrix, i.position);
     o.uv = i.uv;
     return o;
 }
 
 
-Texture2D<float4> tex : register(t0);
+Texture2D<float4> tex : register(t1);
 SamplerState smp : register(s0);
 
 
 float4 frag(v2f i) : SV_TARGET
 {   
     //return float4(i.uv, 0, 1);
-    return tex.Sample(smp, i.uv);
+    return tex.Sample(smp, i.uv) + m.color;
 }

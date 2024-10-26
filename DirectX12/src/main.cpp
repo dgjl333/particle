@@ -16,6 +16,7 @@
 #include "IndexBuffer.h"
 #include "Random.h"
 #include "Time.h"
+#include "RootSignatureManager.h"
 
 using namespace DirectX;
 const float windowSize = 1;
@@ -48,37 +49,6 @@ int main()
 	Texture::Init();
 	Texture texture("texture/1.png");
 
-	D3D12_DESCRIPTOR_RANGE descRange = {};
-	descRange.NumDescriptors = 1;
-	descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descRange.BaseShaderRegister = 0;
-	descRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	D3D12_DESCRIPTOR_RANGE testRange = {};
-	testRange.NumDescriptors = 1;
-	testRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	testRange.BaseShaderRegister = 1;
-	testRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	D3D12_ROOT_PARAMETER rootParams[3] = {};
-	rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	rootParams[1].DescriptorTable.pDescriptorRanges = &descRange;
-	rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
-
-	rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	rootParams[2].DescriptorTable.pDescriptorRanges = &testRange;
-	rootParams[2].DescriptorTable.NumDescriptorRanges = 1;
-
-	D3D12_ROOT_DESCRIPTOR sharedDesc = {};
-	sharedDesc.RegisterSpace = 0;
-	sharedDesc.ShaderRegister = 0;
-
-	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	rootParams[0].Descriptor = sharedDesc;
-
 	std::vector<Vertex> vertices = {
 		{{0.0f, 500.0f, 0.0f}, {0, 0}},
 		{{500.0f, 500.0f, 0.0f}, {1, 0}},
@@ -105,37 +75,13 @@ int main()
 		},
 	};
 
-	ID3D12RootSignature* rootSignature = nullptr;
-	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	rootSignatureDesc.pParameters = rootParams;
-	rootSignatureDesc.NumParameters = 3;
-	rootSignatureDesc.pStaticSamplers = &texture.GetSamplerDescription();
-	rootSignatureDesc.NumStaticSamplers = 1;
-	ID3D10Blob* rootSigatureBlob = nullptr;
-	ID3D10Blob* errorBlob = nullptr;
-
-	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigatureBlob, &errorBlob);
-	if (errorBlob)
-	{
-		// Get the size of the error message
-		size_t errorSize = errorBlob->GetBufferSize();
-
-		// Retrieve the error message
-		const char* errorMessage = static_cast<const char*>(errorBlob->GetBufferPointer());
-
-		// Print the error message
-		std::cerr << "Error serializing root signature: " << std::string(errorMessage, errorSize) << std::endl;
-
-		// Release the errorBlob
-		errorBlob->Release();
-	}
-
-	result = device->CreateRootSignature(0, rootSigatureBlob->GetBufferPointer(), rootSigatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-	rootSigatureBlob->Release();
+	RootSignatureManager rootSignatureManager;
+	rootSignatureManager.Add(RangeType::CBV | RangeType::SRV);
+	rootSignatureManager.Add(RangeType::CBV);
+	rootSignatureManager.Serialize(&texture.GetSamplerDescription(), 1);
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
-	pipelineDesc.pRootSignature = rootSignature;
+	pipelineDesc.pRootSignature = rootSignatureManager.GetSignature();
 	pipelineDesc.VS.pShaderBytecode = shader.GetVS()->GetBufferPointer();
 	pipelineDesc.VS.BytecodeLength = shader.GetVS()->GetBufferSize();
 	pipelineDesc.PS.pShaderBytecode = shader.GetPS()->GetBufferPointer();
@@ -170,7 +116,7 @@ int main()
 	D3D12_DESCRIPTOR_HEAP_DESC  srvHeapDesc = {};
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	srvHeapDesc.NodeMask = 0;
-	srvHeapDesc.NumDescriptors = 3;  //num of cbv_srv_uav total amount
+	srvHeapDesc.NumDescriptors = 4;  //num of cbv_srv_uav total amount
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
 	result = device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvDescHeap));
@@ -186,7 +132,7 @@ int main()
 
 	ID3D12Resource* constBuffer = nullptr;
 	D3D12_RESOURCE_DESC matrixDesc = Utils::ResourceDesc(Utils::AlignSize256(sizeof(SharedInput)));
-	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &matrixDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&constBuffer));
+	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &matrixDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&constBuffer));\
 
 	XMMATRIX* sharedInputMap;
 	result = constBuffer->Map(0, nullptr, (void**)&sharedInputMap);
@@ -202,8 +148,23 @@ int main()
 
 	srvHeapHanlde.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), srvHeapHanlde);
 
+	float4 cccc = float4(0.5, 0.0, 0.0, 0.0);
+	ID3D12Resource* constBuffer2 = nullptr;
+	D3D12_RESOURCE_DESC float4Desc = Utils::ResourceDesc(Utils::AlignSize256(sizeof(float4)));
+	result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &float4Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&constBuffer2));
+	void* float4Map;
+	result = constBuffer2->Map(0, nullptr, &float4Map);
+	memcpy(float4Map, &cccc, sizeof(float4));
+	constBuffer2->Unmap(0, nullptr);
+	D3D12_CONSTANT_BUFFER_VIEW_DESC float4BufferView = {};
+	float4BufferView.BufferLocation = constBuffer2->GetGPUVirtualAddress();
+	float4BufferView.SizeInBytes = constBuffer2->GetDesc().Width;
+	device->CreateConstantBufferView(&float4BufferView, srvHeapHanlde);
+
+	srvHeapHanlde.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), srvHeapHanlde);
 
 
 	std::vector<Vertex> vertices2 = {
@@ -216,7 +177,7 @@ int main()
 	VertexBuffer vb2(vertices2);
 	Shader shader2("shader/Test.hlsl");
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC anotherPipelineDesc = {};
-	anotherPipelineDesc.pRootSignature = rootSignature;
+	anotherPipelineDesc.pRootSignature = rootSignatureManager.GetSignature();
 	anotherPipelineDesc.VS.pShaderBytecode = shader2.GetVS()->GetBufferPointer();
 	anotherPipelineDesc.VS.BytecodeLength = shader2.GetVS()->GetBufferSize();
 	anotherPipelineDesc.PS.pShaderBytecode = shader2.GetPS()->GetBufferPointer();
@@ -333,7 +294,7 @@ int main()
 		GUI::Update();
 		Renderer::Update();
 	
-		cmdList->SetGraphicsRootSignature(rootSignature);
+		cmdList->SetGraphicsRootSignature(rootSignatureManager.GetSignature());
 		cmdList->SetPipelineState(pipelineState);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
@@ -348,7 +309,7 @@ int main()
 		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
 		cmdList->SetPipelineState(anotherPipelineState);
-		gpuHandle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		gpuHandle.ptr += 2 * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		cmdList->SetGraphicsRootDescriptorTable(2, gpuHandle);
 		cmdList->IASetVertexBuffers(0, 1, &vb2.GetView());
 

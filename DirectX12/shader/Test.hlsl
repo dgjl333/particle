@@ -1,16 +1,12 @@
 #include "CommonData.hlsli"
 
-cbuffer Co : register(b2)
-{
-    float4 c;
-};
 
 struct Matrix
 {
     float4 _Color;
     float4x4 mat;
 };
-ConstantBuffer<Matrix> m : register(b1);
+ConstantBuffer<Matrix> m : register(b2);
 
 
 v2f vert(vertData i)
