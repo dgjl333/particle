@@ -6,12 +6,18 @@
 
 void Texture::Init()
 {
-	 CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	static bool isInitalized = false;
+	if (!isInitalized)
+	{
+		 CoInitializeEx(NULL, COINIT_MULTITHREADED);
+		 isInitalized = true;
+	}
 }
 
 Texture::Texture(const std::string& filePath) :
 	m_buffer(nullptr), m_srvDesc{}, m_samplerDesc{}, m_metaData{}
 {
+	Init();
 	DirectX::ScratchImage scratchImg = {};
 
 	LoadFromWICFile(Utils::GetWStringFromString(filePath).c_str(), DirectX::WIC_FLAGS_NONE, &m_metaData, scratchImg);

@@ -11,12 +11,11 @@ private:
 	D3D12_STATIC_SAMPLER_DESC m_samplerDesc;
 	DirectX::TexMetadata m_metaData;
 
+	void Init();
 	void CreateResource(const DirectX::Image* img, ID3D12Resource** uploadBuffer);
 	void Upload(const DirectX::Image* img, ID3D12Resource* uploadBuffer);
 
 public:
-	static void Init();
-
 	Texture(const std::string& filePath);
 	~Texture();
 

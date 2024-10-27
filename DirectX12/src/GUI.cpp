@@ -6,7 +6,7 @@
 #include "Window.h"
 #include "GraphicDevice.h"
 
-ID3D12DescriptorHeap* GUI::m_descriptorHeap = nullptr;
+ID3D12DescriptorHeap* GUI::s_descriptorHeap = nullptr;
 
 void GUI::Init()
 {
@@ -25,8 +25,8 @@ void GUI::Init()
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	ID3D12Device* device = GraphicDevice::GetDevice();
-	device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_descriptorHeap));
-	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, m_descriptorHeap, m_descriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&s_descriptorHeap));
+	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, s_descriptorHeap, s_descriptorHeap->GetCPUDescriptorHandleForHeapStart(), s_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void GUI::Update()
@@ -44,7 +44,7 @@ void GUI::Update()
 
 void GUI::Render(ID3D12GraphicsCommandList* cmdList)
 {
-	cmdList->SetDescriptorHeaps(1, &m_descriptorHeap);
+	cmdList->SetDescriptorHeaps(1, &s_descriptorHeap);
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 }
@@ -54,10 +54,10 @@ void GUI::Destroy()
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
-	if (m_descriptorHeap)
+	if (s_descriptorHeap)
 	{
-		m_descriptorHeap->Release();
-		m_descriptorHeap = nullptr;
+		s_descriptorHeap->Release();
+		s_descriptorHeap = nullptr;
 	}
 }
 

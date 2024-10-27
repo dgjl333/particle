@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <d3d12.h>
+#include <string>
 
 enum class RangeType
 {
@@ -15,13 +16,17 @@ inline RangeType operator|(RangeType a, RangeType b)
 }
 
 
-class RootSignatureManager
+class RootSignature
 {
 private:
 	ID3D12RootSignature* m_signature;
 	std::vector<D3D12_ROOT_PARAMETER> m_parameters;
-	std::vector<D3D12_DESCRIPTOR_RANGE> m_ranges;
+	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> m_ranges;
+
 	D3D12_ROOT_SIGNATURE_DESC m_desc;
+	UINT m_numDescriptors = 0;
+
+	std::vector<int> m_rootArgumentsOffsets;
 
 	int m_cbvRegister = 1;  //register 0 is reserved
 	int m_srvRegister = 1;
@@ -52,13 +57,25 @@ private:
 		return ((int)value & (int)flag) != 0;
 	}
 
+	std::string DebugGetInfoType(D3D12_DESCRIPTOR_RANGE_TYPE type);
+
+	std::string DebugGetInfoType(D3D12_ROOT_PARAMETER_TYPE type);
+
+	std::string DebugGetShaderRegister(const std::string& typeName, UINT shaderRegister);
+
+	void DebugPrintLayout();
+
 public:
-	RootSignatureManager();
-	~RootSignatureManager();
+	RootSignature();
+	~RootSignature();
 
 	void Serialize(const D3D12_STATIC_SAMPLER_DESC* pStaticSamplers, UINT numStaticSamplers);
 
 	void Add(RangeType type);
 
-	ID3D12RootSignature* GetSignature() { return m_signature; }
+	inline ID3D12RootSignature* GetSignature() { return m_signature; }
+
+	inline UINT GetNumDescriptors() { return m_numDescriptors; }
+
+	inline const std::vector<int>& GetRootArgumentsOffsets() { return m_rootArgumentsOffsets; }
 };

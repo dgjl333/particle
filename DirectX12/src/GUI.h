@@ -5,7 +5,7 @@
 class GUI
 {
 private:
-	static ID3D12DescriptorHeap* m_descriptorHeap;
+	static ID3D12DescriptorHeap* s_descriptorHeap;
 
 public:
 	static void Init();

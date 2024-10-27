@@ -2,13 +2,13 @@
 #include <vector>
 #include "Debug.h"
 
-ID3D12Device* GraphicDevice::m_device = nullptr;
-IDXGIFactory6* GraphicDevice::m_dxgiFactory = nullptr;
+ID3D12Device* GraphicDevice::s_device = nullptr;
+IDXGIFactory6* GraphicDevice::s_dxgiFactory = nullptr;
 
 void GraphicDevice::Init()
 {
 #ifdef _DEBUG
-	if (FAILED(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory))))
+	if (FAILED(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&s_dxgiFactory))))
 	{
 		print("Failed creating DXGI factory");
 		exit(1);
@@ -19,7 +19,7 @@ void GraphicDevice::Init()
 
 	std::vector<IDXGIAdapter*> allAdapters;
 	IDXGIAdapter* adapter = nullptr;
-	for (size_t i = 0; m_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
+	for (size_t i = 0; s_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
 	{
 		allAdapters.push_back(adapter);
 	}
@@ -36,9 +36,9 @@ void GraphicDevice::Init()
 		}
 	}
 
-	for (D3D_FEATURE_LEVEL level : levels)
+	for (D3D_FEATURE_LEVEL level : s_levels)
 	{
-		if (SUCCEEDED(D3D12CreateDevice(adapter, level, IID_PPV_ARGS(&m_device))))
+		if (SUCCEEDED(D3D12CreateDevice(adapter, level, IID_PPV_ARGS(&s_device))))
 		{
 			break;
 		}
@@ -47,11 +47,11 @@ void GraphicDevice::Init()
 
 void GraphicDevice::Destroy()
 {
-	if(m_device) m_device->Release();
-	if(m_dxgiFactory) m_dxgiFactory->Release();
+	if(s_device) s_device->Release();
+	if(s_dxgiFactory) s_dxgiFactory->Release();
 }
 
-D3D_FEATURE_LEVEL GraphicDevice::levels[5] = {
+D3D_FEATURE_LEVEL GraphicDevice::s_levels[5] = {
    D3D_FEATURE_LEVEL_12_2,
    D3D_FEATURE_LEVEL_12_1,
    D3D_FEATURE_LEVEL_12_0,

@@ -4,8 +4,8 @@
 	class Random
 	{
 	private:
-		static std::uniform_real_distribution<float> m_dist;
-		static std::mt19937 m_engine;
+		static std::uniform_real_distribution<float> s_dist;
+		static std::mt19937 s_engine;
 
 	public:
 		static void Init();

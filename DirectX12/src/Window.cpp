@@ -21,37 +21,37 @@ void Window::Init(float size)
 {
 	//m_height = GetSystemMetrics(SM_CYSCREEN)* size;
 	//m_width = GetSystemMetrics(SM_CXSCREEN) * size;
-	m_height = 1080 * size;         //set a fixed size for now
-	m_width = 1920 * size;
+	s_height = 1080 * size;         //set a fixed size for now
+	s_width = 1920 * size;
 
-	m_wc.cbSize = sizeof(WNDCLASSEX);
-	m_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
-	m_wc.lpszClassName = L"DX12";
-	m_wc.hInstance = GetModuleHandle(nullptr);
-	RegisterClassEx(&m_wc);
-	RECT rect = { 0, 0, m_width, m_height };
+	s_wc.cbSize = sizeof(WNDCLASSEX);
+	s_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
+	s_wc.lpszClassName = L"DX12";
+	s_wc.hInstance = GetModuleHandle(nullptr);
+	RegisterClassEx(&s_wc);
+	RECT rect = { 0, 0, s_width, s_height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hwnd = CreateWindow(m_wc.lpszClassName, L"Window", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_wc.hInstance, nullptr);
+	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Window", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, s_wc.hInstance, nullptr);
 
-	if (m_hwnd == NULL)
+	if (s_hwnd == NULL)
 	{
 		print("Window creation failed");
 		exit(1);
 	}
 
-	ShowWindow(m_hwnd, SW_SHOW);
+	ShowWindow(s_hwnd, SW_SHOW);
 }
 
 bool Window::Update()
 {
-	if (PeekMessage(&m_msg, nullptr, 0, 0, PM_REMOVE))
+	if (PeekMessage(&s_msg, nullptr, 0, 0, PM_REMOVE))
 	{
-		TranslateMessage(&m_msg);
-		DispatchMessage(&m_msg);
+		TranslateMessage(&s_msg);
+		DispatchMessage(&s_msg);
 	}
 
-	if (m_msg.message == WM_QUIT)
+	if (s_msg.message == WM_QUIT)
 	{
 		return false;
 	}
@@ -61,12 +61,12 @@ bool Window::Update()
 void Window::Destroy()
 {
 	GUI::Destroy();
-	DestroyWindow(m_hwnd);
-	UnregisterClass(m_wc.lpszClassName, m_wc.hInstance);
+	DestroyWindow(s_hwnd);
+	UnregisterClass(s_wc.lpszClassName, s_wc.hInstance);
 }
 
-WNDCLASSEX Window::m_wc = {};
-HWND Window::m_hwnd = {};
-MSG Window::m_msg = {};
-int Window::m_width = 0;
-int Window::m_height = 0;
+WNDCLASSEX Window::s_wc = {};
+HWND Window::s_hwnd = {};
+MSG Window::s_msg = {};
+int Window::s_width = 0;
+int Window::s_height = 0;

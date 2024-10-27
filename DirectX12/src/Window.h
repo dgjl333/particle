@@ -4,11 +4,11 @@
 class Window
 {
 private :
-	static WNDCLASSEX m_wc;
-	static HWND m_hwnd;
-	static MSG m_msg;
-	static int m_width;
-	static int m_height;
+	static WNDCLASSEX s_wc;
+	static HWND s_hwnd;
+	static MSG s_msg;
+	static int s_width;
+	static int s_height;
 	
 	static LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -22,7 +22,7 @@ public:
 
 	static void Destroy();
 
-	static int GetWidth() { return m_width; }
-	static int GetHeight() { return m_height;}
-	static HWND GetHWND() { return m_hwnd; }
+	static int GetWidth() { return s_width; }
+	static int GetHeight() { return s_height;}
+	static HWND GetHWND() { return s_hwnd; }
 };
