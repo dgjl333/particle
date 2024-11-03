@@ -14,7 +14,7 @@ void GraphicDevice::Init()
 		exit(1);
 	}
 #else
-	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&m_dxgiFactory)))) exit(1);
+	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&s_dxgiFactory)))) exit(1);
 #endif 
 
 	std::vector<IDXGIAdapter*> allAdapters;

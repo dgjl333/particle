@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Main.cpp">
+    <ClCompile Include="src\ParticleRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\Shader.cpp">
@@ -154,10 +154,11 @@
     <Font Include="font\ARIAL.TTF" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\CommonData.hlsli" />
+    <None Include="shader\CommonStructure.hlsli" />
     <None Include="external\DirectXTex\DirectXTex.inl">
       <Filter>ヘッダー ファイル</Filter>
     </None>
+    <None Include="shader\CommonInput.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\Release\DirectXTex.lib" />
@@ -165,5 +166,7 @@
   <ItemGroup>
     <FxCompile Include="shader\Basic.hlsl" />
     <FxCompile Include="shader\Test.hlsl" />
+    <FxCompile Include="shader\ComputeShader.hlsl" />
+    <FxCompile Include="shader\Particle.hlsl" />
   </ItemGroup>
 </Project>

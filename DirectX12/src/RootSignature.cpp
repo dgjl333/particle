@@ -150,7 +150,7 @@ std::string RootSignature::DebugGetShaderRegister(const std::string& typeName, U
 {
 	auto firstCharacter = typeName[0];
 	if (firstCharacter == 'C') return std::format("(b{})", shaderRegister);
-	else if (firstCharacter == 'S') return std::format("(s{})", shaderRegister);
+	else if (firstCharacter == 'S') return std::format("(t{})", shaderRegister);
 	else if (firstCharacter == 'U') return std::format("(u{})", shaderRegister);
 	else return "Unknown Register";
 }

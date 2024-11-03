@@ -164,7 +164,7 @@
     <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
-    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\ParticleRenderer.cpp" />
     <ClCompile Include="src\Random.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\RootSignature.cpp" />
@@ -205,13 +205,26 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="external\DirectXTex\DirectXTex.inl" />
-    <None Include="shader\CommonData.hlsli" />
+    <None Include="shader\CommonStructure.hlsli" />
+    <None Include="shader\CommonInput.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\Release\DirectXTex.lib" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\Basic.hlsl" />
+    <FxCompile Include="shader\ComputeShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CSMain</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CSMain</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="shader\Particle.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="shader\Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

@@ -6,51 +6,39 @@
 #include "GraphicDevice.h"
 #include "Time.h"
 
+#ifdef _DEBUG
+	UINT Shader::s_compileFlag = D3DCOMPILE_DEBUG;
+#else
+	UINT Shader::s_compileFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#endif
+
 Shader::Shader(const std::string& filePath)
 {
-#ifdef _DEBUG
-	UINT flag = D3DCOMPILE_DEBUG;
-#else
-	UINT flag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
-#endif
-	ID3DBlob* errorBlobVS;
-	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_1", flag, 0, &m_vsBlob, &errorBlobVS);
+	ID3DBlob* errorBlob;
 
-	if (FAILED(result))
+	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_1", s_compileFlag, 0, &m_vsBlob, &errorBlob);
+	ErrorCheck("Vertex Shader", result, errorBlob);
+
+	result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_1", s_compileFlag, 0, &m_psBlob, &errorBlob);
+	ErrorCheck("Pixel Shader", result, errorBlob);
+}
+
+void Shader::ErrorCheck(const std::string& errorShader, const HRESULT& compileResult, ID3DBlob* errorBlob)
+{
+	if (FAILED(compileResult))
 	{
-		if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+		if (compileResult == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
 		{
-			print("Vertex Shader: File not found");
+			print(errorShader, "File not found");
 		}
-		else if (result == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND))
+		else if (compileResult == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND))
 		{
-			print("Vertex Shader: Path not found");
+			print(errorShader, "Path not found");
 		}
-		else if (errorBlobVS)
+		else if (errorBlob)
 		{
-			print("Vertex Shader", (char*)errorBlobVS->GetBufferPointer());
-			errorBlobVS->Release();
-		}
-		exit(1);
-	}
-
-	ID3DBlob* errorBlobPS;
-	result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_1", flag, 0, &m_psBlob, &errorBlobPS);
-
-	if (FAILED(result))
-	{
-		if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-		{
-			print("Pixel Shader: File not found");
-		}
-		else if (result == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND))
-		{
-			print("Pixel Shader: Path not found");
-		}
-		else if (errorBlobPS)
-		{
-			print("Pixel Shader", (char*)errorBlobPS->GetBufferPointer());
-			errorBlobPS->Release();
+			print(errorShader, (char*)errorBlob->GetBufferPointer());
+			errorBlob->Release();
 		}
 		exit(1);
 	}
@@ -98,4 +86,14 @@ void Shader::UpdateSharedResources(ID3D12GraphicsCommandList* cmdList)
 	s_sharedInput.time = float4(time / 20, time, time * 2, time * 3);
 	s_sharedInput.deltaTime = Time::GetDeltaTime();
 	memcpy(s_CBMap, &s_sharedInput, sizeof(SharedInput));
+}
+
+ID3DBlob* Shader::CompileComputeShader(const std::string& filePath)
+{
+	ID3DBlob* errorBlob;
+	ID3DBlob* shaderBlob;
+
+	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "CSMain", "cs_5_1", s_compileFlag, 0, &shaderBlob, &errorBlob);
+	ErrorCheck("Compute Shader", result, errorBlob);
+	return shaderBlob;
 }

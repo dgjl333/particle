@@ -1,10 +1,13 @@
-cbuffer SimulationParams : register(b0)
+#include "CommonInput.hlsli"
+#define PARTICLE_COUNT 100000
+
+struct Particle
 {
-    float3 Gravity;
-    float DeltaTime;
+    float2 position;
+    float2 velocity;
 };
 
-RWStructuredBuffer<Particle> particles : register(u0);
+RWStructuredBuffer<Particle> particles : register(u1);
 
 [numthreads(32, 1, 1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
@@ -16,10 +19,8 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 
     Particle p = particles[index];
     
-    // Update particle position based on velocity and gravity
-    p.Velocity.xyz += Gravity * DeltaTime;
-    p.Position.xyz += p.Velocity.xyz * DeltaTime;
+    //p.velocity.xy += float2(0, -1) * _DeltaTime;
+    //p.position.xy += p.velocity.xy * _DeltaTime;
 
-    // Write the updated particle back
     particles[index] = p;
 }

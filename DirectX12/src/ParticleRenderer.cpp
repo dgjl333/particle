@@ -69,10 +69,12 @@ int main()
 	RootSignature rootSignature;
 	rootSignature.Add(RangeType::CBV | RangeType::SRV);
 	rootSignature.Add(RangeType::CBV);
+	rootSignature.Add(RangeType::UAV);
+	rootSignature.Add(RangeType::SRV);
 	rootSignature.Serialize(&texture.GetSamplerDescription(), 1);
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
-	pipelineDesc.pRootSignature = rootSignature.GetSignature();
+	pipelineDesc.pRootSignature = rootSignature.Get();
 	pipelineDesc.VS.pShaderBytecode = shader.GetVS()->GetBufferPointer();
 	pipelineDesc.VS.BytecodeLength = shader.GetVS()->GetBufferSize();
 	pipelineDesc.PS.pShaderBytecode = shader.GetPS()->GetBufferPointer();
@@ -126,7 +128,6 @@ int main()
 	cpuHandle.Increment();
 	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Get());
 
-
 	std::vector<Vertex> vertices2 = {
 	{{500.0f, 500.0f, 0.0f}, {0, 0}},
 	{{1000.0f, 500.0f, 0.0f}, {1, 0}},
@@ -137,7 +138,7 @@ int main()
 	VertexBuffer vb2(vertices2);
 	Shader shader2("shader/Test.hlsl");
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC anotherPipelineDesc = {};
-	anotherPipelineDesc.pRootSignature = rootSignature.GetSignature();
+	anotherPipelineDesc.pRootSignature = rootSignature.Get();
 	anotherPipelineDesc.VS.pShaderBytecode = shader2.GetVS()->GetBufferPointer();
 	anotherPipelineDesc.VS.BytecodeLength = shader2.GetVS()->GetBufferSize();
 	anotherPipelineDesc.PS.pShaderBytecode = shader2.GetPS()->GetBufferPointer();
@@ -186,6 +187,99 @@ int main()
 
 	device->CreateConstantBufferView(&testCbvDesc, cpuHandle.Get());
 
+		struct Particle
+	 {
+ 		float2 position;
+ 		float2 velocity;
+	 };
+
+	 const int particleCount = 100000;
+
+	 std::vector<Particle> particles(particleCount);
+	 for (int i = 0; i < particleCount; i++)
+	 {
+ 		particles[i].velocity = { 0.0f, 0.0f };
+		//particles[i].position = { Random::GetValue(), Random::GetValue()};
+		particles[i].position = { std::lerp(0.0f, 1920.0f, (float)i / particleCount),800.0f};
+	 }
+
+	 D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	 D3D12_RESOURCE_DESC particleUploadDesc = Utils::ResourceDesc(particleCount * sizeof(Particle));
+
+	 ID3D12Resource* particleBuffer;
+	 device->CreateCommittedResource(&Utils::heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &particleDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&particleBuffer));
+
+	 ID3D12Resource* particleUploadBuffer;
+	 device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &particleUploadDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&particleUploadBuffer));
+
+	 void* particleMap;
+	 particleUploadBuffer->Map(0, nullptr, &particleMap);
+	 memcpy(particleMap, particles.data(), sizeof(Particle) * particleCount);
+	 particleUploadBuffer->Unmap(0, nullptr);
+
+	 cmdList->CopyResource(particleBuffer, particleUploadBuffer);
+
+	 auto particleBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	 Renderer::ExecuteCommands(&particleBarrier);
+	 Renderer::WaitForFrame();
+
+	 particleUploadBuffer->Release();
+
+	 cpuHandle.Increment();
+
+	 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	 uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	 uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	 uavDesc.Buffer.NumElements = particleCount;
+	 uavDesc.Buffer.StructureByteStride = sizeof(Particle);
+
+	 device->CreateUnorderedAccessView(particleBuffer, nullptr, &uavDesc, cpuHandle.Get());
+	 ID3D10Blob* computeShaderBlob = Shader::CompileComputeShader("shader/ComputeShader.hlsl");
+
+	 D3D12_COMPUTE_PIPELINE_STATE_DESC computePipeLineDesc = {};
+	 computePipeLineDesc.CS.pShaderBytecode = computeShaderBlob->GetBufferPointer();
+	 computePipeLineDesc.CS.BytecodeLength = computeShaderBlob->GetBufferSize();
+	 computePipeLineDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	 computePipeLineDesc.NodeMask = 0;
+	 computePipeLineDesc.pRootSignature = rootSignature.Get();
+
+	 ID3D12PipelineState* computePipeLineState = nullptr;
+	 device->CreateComputePipelineState(&computePipeLineDesc, IID_PPV_ARGS(&computePipeLineState));
+
+	 cpuHandle.Increment();
+	 
+	 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	 srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	 srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	 srvDesc.Buffer.FirstElement = 0;
+	 srvDesc.Buffer.NumElements = particleCount;
+	 srvDesc.Buffer.StructureByteStride = sizeof(Particle);
+	 srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	 device->CreateShaderResourceView(particleBuffer, &srvDesc, cpuHandle.Get());
+
+	 Shader particleShader("shader/Particle.hlsl");
+
+	 D3D12_GRAPHICS_PIPELINE_STATE_DESC particlePipelineDesc = {};
+	 particlePipelineDesc.pRootSignature = rootSignature.Get();
+	 particlePipelineDesc.VS.pShaderBytecode = particleShader.GetVS()->GetBufferPointer();
+	 particlePipelineDesc.VS.BytecodeLength = particleShader.GetVS()->GetBufferSize();
+	 particlePipelineDesc.PS.pShaderBytecode = particleShader.GetPS()->GetBufferPointer();
+	 particlePipelineDesc.PS.BytecodeLength = particleShader.GetPS()->GetBufferSize();
+	 particlePipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+	 particlePipelineDesc.RasterizerState = pipelineDesc.RasterizerState;
+	 particlePipelineDesc.BlendState = pipelineDesc.BlendState;
+	 particlePipelineDesc.InputLayout = { nullptr, 0 };
+	 particlePipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+	 particlePipelineDesc.NumRenderTargets = 1;
+	 particlePipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	 particlePipelineDesc.SampleDesc.Count = 1;
+	 particlePipelineDesc.SampleDesc.Quality = 0;
+
+	 ID3D12PipelineState* particlePipelineState = nullptr;
+	 device->CreateGraphicsPipelineState(&particlePipelineDesc, IID_PPV_ARGS(&particlePipelineState));
+
 	Time::Init();
 
 	while (Window::Update())
@@ -194,7 +288,7 @@ int main()
 		GUI::Update();
 		Renderer::Update();
 	
-		cmdList->SetGraphicsRootSignature(rootSignature.GetSignature());
+		cmdList->SetGraphicsRootSignature(rootSignature.Get());
 
 		Shader::UpdateSharedResources(cmdList);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -218,6 +312,25 @@ int main()
 
 		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
+		gpuHandle.Increment();
+		cmdList->SetComputeRootSignature(rootSignature.Get());
+		cmdList->SetPipelineState(computePipeLineState);
+		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
+		cmdList->SetComputeRootDescriptorTable(3, gpuHandle.Get());
+
+		auto preBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		cmdList->ResourceBarrier(1, &preBarrier);
+		cmdList->Dispatch(ceil((float)particleCount / 32), 1, 1);
+
+		gpuHandle.Increment();
+		auto postBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+		cmdList->ResourceBarrier(1, &postBarrier);
+		cmdList->SetGraphicsRootDescriptorTable(4, gpuHandle.Get());
+		cmdList->SetPipelineState(particlePipelineState);
+		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+		cmdList->DrawInstanced(particleCount, 1, 0, 0);
+
+
 		GUI::Render(cmdList);
 
 		Renderer::ExecuteCommands();
@@ -229,65 +342,5 @@ int main()
 	Window::Destroy();
 }
 
-//struct Particle
-//{
-//	float2 position;
-//	float2 velocity;
-//};
 
-//const int particleCount = 100;
 
-//std::vector<Particle> particles(particleCount);
-//for (int i = 0; i < particleCount; i++)
-//{
-//	particles[i].velocity = { 0.0f, 0.0f };
-//	particles[i].position = { 15.0f * i,800.0f };
-//}
-
-//D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-//D3D12_RESOURCE_DESC particleUploadDesc = Utils::ResourceDesc(particleCount * sizeof(Particle));
-
-//ID3D12Resource* particleBuffer;
-//result = device->CreateCommittedResource(&Utils::heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &particleDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&particleBuffer));
-
-//ID3D12Resource* particleUploadBuffer;
-//result = device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &particleUploadDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&particleUploadBuffer));
-
-//void* particleMap;
-//particleUploadBuffer->Map(0, nullptr, &particleMap);
-//memcpy(particleMap, particles.data(), sizeof(Particle)* particleCount);
-//particleUploadBuffer->Unmap(0, nullptr);
-
-//auto particleBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-//cmdList->CopyResource(particleBuffer, particleUploadBuffer);
-
-//Renderer::ExecuteCommands(&particleBarrier);
-//Renderer::WaitForFrame();
-
-//particleUploadBuffer->Release();
-
-//D3D12_ROOT_PARAMETER particleRootParameters[2];
-//particleRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-//particleRootParameters[0].Descriptor.ShaderRegister = 0;
-//particleRootParameters[0].Descriptor.RegisterSpace = 0;
-//particleRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-//particleRootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-//particleRootParameters[1].Descriptor.ShaderRegister = 0;
-//particleRootParameters[1].Descriptor.RegisterSpace = 0;
-//particleRootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-//D3D12_ROOT_SIGNATURE_DESC particleRootSignatureDesc = {};
-//particleRootSignatureDesc.NumParameters = 2;
-//particleRootSignatureDesc.pParameters = particleRootParameters;
-//particleRootSignatureDesc.NumStaticSamplers = 0;
-//particleRootSignatureDesc.pStaticSamplers = nullptr;
-//particleRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-//ID3D10Blob* particleRootSigatureBlob = nullptr;
-//D3D12SerializeRootSignature(&particleRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &particleRootSigatureBlob, &errorBlob);
-
-//ID3D12RootSignature* particleRootsignature = nullptr;
-//device->CreateRootSignature(0, particleRootSigatureBlob->GetBufferPointer(), particleRootSigatureBlob->GetBufferSize(), IID_PPV_ARGS(&particleRootsignature));
-
-//device->CreateUnorderedAccessView()

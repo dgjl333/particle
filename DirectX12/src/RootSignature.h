@@ -73,7 +73,7 @@ public:
 
 	void Add(RangeType type);
 
-	inline ID3D12RootSignature* GetSignature() { return m_signature; }
+	inline ID3D12RootSignature* Get() { return m_signature; }
 
 	inline UINT GetNumDescriptors() { return m_numDescriptors; }
 

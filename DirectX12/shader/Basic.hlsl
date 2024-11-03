@@ -1,4 +1,5 @@
-#include "CommonData.hlsli"
+#include "CommonStructure.hlsli"
+#include "CommonInput.hlsli"
 
 struct Matrix
 {
@@ -10,7 +11,7 @@ ConstantBuffer<Matrix> m:register(b1);
 v2f vert(vertData i)
 {
     v2f o;
-    o.position = mul(_projectionMatrix, i.position);
+    o.position = mul(_ProjectionMatrix, i.position);
     o.uv = i.uv;
     return o;
 }

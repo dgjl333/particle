@@ -43,7 +43,7 @@ Descriptor::GPUHandle::GPUHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle, const std::
 	m_initHandle.ptr += rootArgumentsOffset[0] * s_handleIncrementSize;
 	m_handle = m_initHandle;
 
-	for (int i = 1; i < rootArgumentsOffset.size() - 1; i++)
+	for (int i = 1; i < rootArgumentsOffset.size() - 1; i++) 
 	{
 		m_rootArgumentsOffsets.push_back(rootArgumentsOffset[i]);
 	}
