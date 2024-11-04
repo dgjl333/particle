@@ -10,11 +10,12 @@ using Microsoft::WRL::ComPtr;
 class Shader
 {
 public:
-	Shader(const std::string& filePath);
+	Shader(const std::string& filePath, bool hasGeometryShader = false);
 	~Shader();
 
 	ID3DBlob* GetVS() { return m_vsBlob; }
 	ID3DBlob* GetPS() { return m_psBlob; }
+	ID3DBlob* GetGS() { return m_gsBlob; }
 
 	static void ErrorCheck(const std::string& errorShader, const HRESULT& compileResult, ID3DBlob* errorBlob);
 
@@ -28,6 +29,7 @@ public:
 private:
 	ID3DBlob* m_vsBlob;
 	ID3DBlob* m_psBlob;
+	ID3DBlob* m_gsBlob;
 
 	static UINT s_compileFlag;
 

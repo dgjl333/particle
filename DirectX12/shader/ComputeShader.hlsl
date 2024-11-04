@@ -1,5 +1,5 @@
 #include "CommonInput.hlsli"
-#define PARTICLE_COUNT 100000
+#include "ParticleData.hlsli"
 
 struct Particle
 {
@@ -14,13 +14,14 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
     uint index = DTid.x;
 
-    if (index >= PARTICLE_COUNT)
-        return;
-
     Particle p = particles[index];
     
-    //p.velocity.xy += float2(0, -1) * _DeltaTime;
-    //p.position.xy += p.velocity.xy * _DeltaTime;
+    p.velocity += float2(0, -1) * _DeltaTime * 100;
+    p.position += p.velocity * _DeltaTime;
+    
+    p.position.x = clamp(p.position.x, s_leftBound + s_size * 0.5, s_rightBound - s_size * 0.5);
+    p.position.y = clamp(p.position.y, s_lowerBound + s_size * 0.5, s_upperBound - s_size * 0.5);
+
 
     particles[index] = p;
 }

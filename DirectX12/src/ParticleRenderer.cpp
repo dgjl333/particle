@@ -19,6 +19,9 @@
 #include "RootSignature.h"
 #include "Descriptor.h"
 
+#define PARTICLE_COUNT 100
+#define PARTICLE_NUMTHREADS 32
+
 using namespace DirectX;
 const float windowSize = 1;
 
@@ -68,7 +71,6 @@ int main()
 
 	RootSignature rootSignature;
 	rootSignature.Add(RangeType::CBV | RangeType::SRV);
-	rootSignature.Add(RangeType::CBV);
 	rootSignature.Add(RangeType::UAV);
 	rootSignature.Add(RangeType::SRV);
 	rootSignature.Serialize(&texture.GetSamplerDescription(), 1);
@@ -128,64 +130,7 @@ int main()
 	cpuHandle.Increment();
 	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Get());
 
-	std::vector<Vertex> vertices2 = {
-	{{500.0f, 500.0f, 0.0f}, {0, 0}},
-	{{1000.0f, 500.0f, 0.0f}, {1, 0}},
-	{{1000.0f, 0.0f, 0.0f}, {1, 1}},
-	{{500.0f, 0.0f, 0.0f}, {0, 1}}
-	};
 
-	VertexBuffer vb2(vertices2);
-	Shader shader2("shader/Test.hlsl");
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC anotherPipelineDesc = {};
-	anotherPipelineDesc.pRootSignature = rootSignature.Get();
-	anotherPipelineDesc.VS.pShaderBytecode = shader2.GetVS()->GetBufferPointer();
-	anotherPipelineDesc.VS.BytecodeLength = shader2.GetVS()->GetBufferSize();
-	anotherPipelineDesc.PS.pShaderBytecode = shader2.GetPS()->GetBufferPointer();
-	anotherPipelineDesc.PS.BytecodeLength = shader2.GetPS()->GetBufferSize();
-	anotherPipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	anotherPipelineDesc.RasterizerState = pipelineDesc.RasterizerState;
-	anotherPipelineDesc.BlendState = pipelineDesc.BlendState;
-	anotherPipelineDesc.InputLayout = { inputLayout, _countof(inputLayout) };
-	anotherPipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	anotherPipelineDesc.NumRenderTargets = 1;
-	anotherPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	anotherPipelineDesc.SampleDesc.Count = 1;
-	anotherPipelineDesc.SampleDesc.Quality = 0;
-
-	ID3D12PipelineState* anotherPipelineState = nullptr;
-	device->CreateGraphicsPipelineState(&anotherPipelineDesc, IID_PPV_ARGS(&anotherPipelineState));
-
-	struct TestShaderInput
-	{
-		float4 color;
-		XMMATRIX mat;
-	};
-
-	ID3D12Resource* testConstBuffer = nullptr;
-	D3D12_RESOURCE_DESC bufferDescWithTime = Utils::ResourceDesc(Utils::AlignSize256(sizeof(TestShaderInput)));
-	device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &bufferDescWithTime, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&testConstBuffer));
-
-	XMMATRIX matrix = XMMatrixIdentity();
-	matrix.r[0].m128_f32[0] = 2.0f / Window::GetWidth();
-	matrix.r[1].m128_f32[1] = 2.0f / Window::GetHeight();
-	matrix.r[3].m128_f32[0] = -1.0f;
-	matrix.r[3].m128_f32[1] = -1.0f;
-	TestShaderInput matrixWithTime = {};
-	matrixWithTime.mat = matrix;
-	matrixWithTime.color = float4(1.0f, 0.0f, 0.0f, 1.0f); 
-
-	void* testMap = nullptr;
-	testConstBuffer->Map(0, nullptr, &testMap);
-	memcpy(testMap, &matrixWithTime, sizeof(TestShaderInput));
-	testConstBuffer->Unmap(0, nullptr);
-
-	cpuHandle.Increment();
-	D3D12_CONSTANT_BUFFER_VIEW_DESC testCbvDesc = {};
-	testCbvDesc.BufferLocation = testConstBuffer->GetGPUVirtualAddress();
-	testCbvDesc.SizeInBytes = testConstBuffer->GetDesc().Width;
-
-	device->CreateConstantBufferView(&testCbvDesc, cpuHandle.Get());
 
 		struct Particle
 	 {
@@ -193,7 +138,7 @@ int main()
  		float2 velocity;
 	 };
 
-	 const int particleCount = 100000;
+	 int particleCount = (PARTICLE_COUNT / PARTICLE_NUMTHREADS) * PARTICLE_NUMTHREADS;
 
 	 std::vector<Particle> particles(particleCount);
 	 for (int i = 0; i < particleCount; i++)
@@ -259,7 +204,17 @@ int main()
 
 	 device->CreateShaderResourceView(particleBuffer, &srvDesc, cpuHandle.Get());
 
-	 Shader particleShader("shader/Particle.hlsl");
+	 Shader particleShader("shader/Particle.hlsl", true);
+
+	 D3D12_RENDER_TARGET_BLEND_DESC particleBlendDesc = {}; //addictive blending
+	 particleBlendDesc.BlendEnable = true;
+	 particleBlendDesc.SrcBlend = D3D12_BLEND_ONE;
+	 particleBlendDesc.DestBlend = D3D12_BLEND_ONE;
+	 particleBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	 particleBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	 particleBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	 particleBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	 particleBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	 D3D12_GRAPHICS_PIPELINE_STATE_DESC particlePipelineDesc = {};
 	 particlePipelineDesc.pRootSignature = rootSignature.Get();
@@ -267,9 +222,12 @@ int main()
 	 particlePipelineDesc.VS.BytecodeLength = particleShader.GetVS()->GetBufferSize();
 	 particlePipelineDesc.PS.pShaderBytecode = particleShader.GetPS()->GetBufferPointer();
 	 particlePipelineDesc.PS.BytecodeLength = particleShader.GetPS()->GetBufferSize();
+	 particlePipelineDesc.GS.pShaderBytecode = particleShader.GetGS()->GetBufferPointer();
+	 particlePipelineDesc.GS.BytecodeLength = particleShader.GetGS()->GetBufferSize();
 	 particlePipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 	 particlePipelineDesc.RasterizerState = pipelineDesc.RasterizerState;
 	 particlePipelineDesc.BlendState = pipelineDesc.BlendState;
+	 particlePipelineDesc.BlendState.RenderTarget[0] = particleBlendDesc;
 	 particlePipelineDesc.InputLayout = { nullptr, 0 };
 	 particlePipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
 	 particlePipelineDesc.NumRenderTargets = 1;
@@ -294,29 +252,21 @@ int main()
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		cmdList->SetPipelineState(pipelineState);
-		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
-		cmdList->IASetIndexBuffer(&ib.GetView());
+
 
 		cmdList->SetDescriptorHeaps(1, &descriptor.GetHeap());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
-
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
-
-		cmdList->SetPipelineState(anotherPipelineState);
-		gpuHandle.Increment();
-
-		cmdList->SetGraphicsRootDescriptorTable(2, gpuHandle.Get());
-		cmdList->IASetVertexBuffers(0, 1, &vb2.GetView());
-
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		//cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
+		//cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
+		//cmdList->IASetIndexBuffer(&ib.GetView());
+		//cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
 		gpuHandle.Increment();
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
-		cmdList->SetComputeRootDescriptorTable(3, gpuHandle.Get());
+		cmdList->SetComputeRootDescriptorTable(2, gpuHandle.Get());
 
 		auto preBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		cmdList->ResourceBarrier(1, &preBarrier);
@@ -325,7 +275,7 @@ int main()
 		gpuHandle.Increment();
 		auto postBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		cmdList->ResourceBarrier(1, &postBarrier);
-		cmdList->SetGraphicsRootDescriptorTable(4, gpuHandle.Get());
+		cmdList->SetGraphicsRootDescriptorTable(3, gpuHandle.Get());
 		cmdList->SetPipelineState(particlePipelineState);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);

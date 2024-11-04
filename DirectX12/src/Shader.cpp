@@ -12,7 +12,8 @@
 	UINT Shader::s_compileFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
-Shader::Shader(const std::string& filePath)
+Shader::Shader(const std::string& filePath, bool hasGeometryShader):
+	m_vsBlob(nullptr), m_psBlob(nullptr), m_gsBlob(nullptr)
 {
 	ID3DBlob* errorBlob;
 
@@ -21,6 +22,12 @@ Shader::Shader(const std::string& filePath)
 
 	result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_1", s_compileFlag, 0, &m_psBlob, &errorBlob);
 	ErrorCheck("Pixel Shader", result, errorBlob);
+
+	if (hasGeometryShader)
+	{
+		result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "geom", "gs_5_1", s_compileFlag, 0, &m_gsBlob, &errorBlob);
+		ErrorCheck("Geometry Shader", result, errorBlob);
+	}
 }
 
 void Shader::ErrorCheck(const std::string& errorShader, const HRESULT& compileResult, ID3DBlob* errorBlob)
