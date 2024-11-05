@@ -207,6 +207,7 @@
     <None Include="external\DirectXTex\DirectXTex.inl" />
     <None Include="shader\CommonStructure.hlsli" />
     <None Include="shader\CommonInput.hlsli" />
+    <None Include="shader\Noise.hlsli" />
     <None Include="shader\ParticleData.hlsli" />
   </ItemGroup>
   <ItemGroup>

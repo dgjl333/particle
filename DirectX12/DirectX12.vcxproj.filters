@@ -160,6 +160,7 @@
     </None>
     <None Include="shader\CommonInput.hlsli" />
     <None Include="shader\ParticleData.hlsli" />
+    <None Include="shader\Noise.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\Release\DirectXTex.lib" />

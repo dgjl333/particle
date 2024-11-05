@@ -19,7 +19,7 @@
 #include "RootSignature.h"
 #include "Descriptor.h"
 
-#define PARTICLE_COUNT 100
+#define PARTICLE_COUNT 100000
 #define PARTICLE_NUMTHREADS 32
 
 using namespace DirectX;
@@ -145,7 +145,8 @@ int main()
 	 {
  		particles[i].velocity = { 0.0f, 0.0f };
 		//particles[i].position = { Random::GetValue(), Random::GetValue()};
-		particles[i].position = { std::lerp(0.0f, 1920.0f, (float)i / particleCount),800.0f};
+		particles[i].position = { Random::Range(0.0f, 1920.0f), Random::Range(0.0f, 1080.0f)};
+		//particles[i].position = { std::lerp(0.0f, 1920.0f, (float)i / particleCount),800.0f};
 	 }
 
 	 D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
