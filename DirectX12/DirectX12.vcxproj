@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,7 +132,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,13 +153,13 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="external\imgui\imgui.cpp" />
-    <ClCompile Include="external\imgui\imgui_demo.cpp" />
-    <ClCompile Include="external\imgui\imgui_draw.cpp" />
-    <ClCompile Include="external\imgui\imgui_impl_dx12.cpp" />
-    <ClCompile Include="external\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="external\imgui\imgui_tables.cpp" />
-    <ClCompile Include="external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="include\imgui\imgui.cpp" />
+    <ClCompile Include="include\imgui\imgui_demo.cpp" />
+    <ClCompile Include="include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="include\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="include\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="include\imgui\imgui_tables.cpp" />
+    <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Descriptor.cpp" />
     <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\GUI.cpp" />
@@ -176,15 +176,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug\Debug.h" />
-    <ClInclude Include="external\DirectXTex\DirectXTex.h" />
-    <ClInclude Include="external\imgui\imconfig.h" />
-    <ClInclude Include="external\imgui\imgui.h" />
-    <ClInclude Include="external\imgui\imgui_impl_dx12.h" />
-    <ClInclude Include="external\imgui\imgui_impl_win32.h" />
-    <ClInclude Include="external\imgui\imgui_internal.h" />
-    <ClInclude Include="external\imgui\imstb_rectpack.h" />
-    <ClInclude Include="external\imgui\imstb_textedit.h" />
-    <ClInclude Include="external\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\DirectXTex\DirectXTex.h" />
+    <ClInclude Include="include\imgui\imconfig.h" />
+    <ClInclude Include="include\imgui\imgui.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="include\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="include\imgui\imgui_internal.h" />
+    <ClInclude Include="include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="include\imgui\imstb_textedit.h" />
+    <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\Descriptor.h" />
     <ClInclude Include="src\GraphicDevice.h" />
     <ClInclude Include="src\GUI.h" />
@@ -201,16 +201,17 @@
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <Font Include="font\ARIAL.TTF" />
+    <Font Include="assets\font\ARIAL.TTF" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="external\DirectXTex\DirectXTex.inl" />
+    <None Include="include\DirectXTex\DirectXTex.inl" />
     <None Include="shader\CommonStructure.hlsli" />
     <None Include="shader\CommonInput.hlsli" />
     <None Include="shader\Noise.hlsli" />
     <None Include="shader\ParticleData.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <Library Include="lib\Debug\DirectXTex.lib" />
     <Library Include="lib\Release\DirectXTex.lib" />
   </ItemGroup>
   <ItemGroup>

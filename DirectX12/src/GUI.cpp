@@ -13,7 +13,7 @@ void GUI::Init()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.Fonts->AddFontFromFileTTF("font/ARIAL.TTF", 15);
+	io.Fonts->AddFontFromFileTTF("assets/font/ARIAL.TTF", 15);
 	io.Fonts->Build();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::StyleColorsDark();

@@ -41,7 +41,7 @@ int main()
 	Renderer::Init();
 	ID3D12GraphicsCommandList* cmdList = Renderer::GetCommandList();
 
-	Texture texture("texture/1.png");
+	Texture texture("assets/texture/1.png");
 
 	std::vector<Vertex> vertices = {
 		{{0.0f, 500.0f, 0.0f}, {0, 0}},
