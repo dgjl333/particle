@@ -118,8 +118,7 @@ int main()
 	ConstantBuffer constantBuffer((void*)&cccc, sizeof(cccc));
 	device->CreateConstantBufferView(&constantBuffer.GetDesc(), cpuHandle.Get());
 
-	cpuHandle.Increment();
-	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Get());
+	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Increment());
 
 	struct Particle
 	{
@@ -175,8 +174,7 @@ int main()
 	uavDesc.Buffer.NumElements = particleCount;
 	uavDesc.Buffer.StructureByteStride = sizeof(Particle);
 
-	cpuHandle.Increment();
-	device->CreateUnorderedAccessView(particleBuffer, nullptr, &uavDesc, cpuHandle.Get());
+	device->CreateUnorderedAccessView(particleBuffer, nullptr, &uavDesc, cpuHandle.Increment());
 	ID3D10Blob* computeShaderBlob = Shader::CompileComputeShader("shader/ComputeShader.hlsl");
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipeLineDesc = {};
@@ -198,8 +196,7 @@ int main()
 	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-	cpuHandle.Increment();
-	device->CreateShaderResourceView(particleBuffer, &srvDesc, cpuHandle.Get());
+	device->CreateShaderResourceView(particleBuffer, &srvDesc, cpuHandle.Increment());
 
 	Shader particleShader("shader/Particle.hlsl", true);
 
@@ -259,20 +256,18 @@ int main()
 		//cmdList->IASetIndexBuffer(&ib.GetView());
 		//cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
-		gpuHandle.Increment();
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
-		cmdList->SetComputeRootDescriptorTable(2, gpuHandle.Get());
+		cmdList->SetComputeRootDescriptorTable(2, gpuHandle.Increment());
 
 		auto preBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		cmdList->ResourceBarrier(1, &preBarrier);
-		cmdList->Dispatch(ceil((float)particleCount / 32), 1, 1);
+		cmdList->Dispatch(particleCount / PARTICLE_NUMTHREADS, 1, 1);
 
-		gpuHandle.Increment();
 		auto postBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		cmdList->ResourceBarrier(1, &postBarrier);
-		cmdList->SetGraphicsRootDescriptorTable(3, gpuHandle.Get());
+		cmdList->SetGraphicsRootDescriptorTable(3, gpuHandle.Increment());
 		cmdList->SetPipelineState(particlePipelineState);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);

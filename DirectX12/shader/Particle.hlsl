@@ -79,7 +79,6 @@ void geom(point v2g input[1], inout TriangleStream<g2f> stream)
 }
 
 
-
 float3 hsl2rgb(float3 c)
 {
     float3 rgb = clamp(abs(fmod(c.x * 6.0 + float3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
@@ -93,8 +92,8 @@ float4 frag(g2f i) : SV_TARGET
     float dist = length(uv);
     
     float h = 0.5 * (sin(_Time.y * 0.1 + _Seed * 2 * PI) + 1);
-    float l = lerp(0.25, 0.65, smoothstep(15, 150, length(i.velocity)));
-    float3 rgb = hsl2rgb(float3(h, l, 0.5));
+    float s = lerp(0.35, 0.75, smoothstep(15, 150, length(i.velocity)));
+    float3 rgb = hsl2rgb(float3(h, s, 0.5));
     float4 color = lerp(float4(rgb, 1), 0, smoothstep(0.01, 1, dist));
     
     return color;

@@ -27,9 +27,10 @@ Descriptor::CPUHandle::CPUHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle):
 	m_initHandle(handle), m_handle(handle) {}
 
 
-void Descriptor::CPUHandle::Increment()
+D3D12_CPU_DESCRIPTOR_HANDLE Descriptor::CPUHandle::Increment()
 {
 	m_handle.ptr += s_handleIncrementSize;
+	return m_handle;
 }
 
 void Descriptor::CPUHandle::Reset()
@@ -49,14 +50,16 @@ Descriptor::GPUHandle::GPUHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle, const std::
 	}
 }
 
-void Descriptor::GPUHandle::Increment()
+D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GPUHandle::Increment()
 {
 	m_handle.ptr += m_rootArgumentsOffsets[m_index] * s_handleIncrementSize;
 	m_index++;
+	return m_handle;
 }
 
-void Descriptor::GPUHandle::ResetToGraphicsRootDescriptorTableStart()
+D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GPUHandle::ResetToGraphicsRootDescriptorTableStart()
 {
 	m_handle = m_initHandle;
 	m_index = 0;
+	return m_handle;
 }

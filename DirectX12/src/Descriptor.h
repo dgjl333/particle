@@ -14,8 +14,8 @@ public:
 	public:
 		CPUHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle);
 
-		void Increment();
 		void Reset();
+		D3D12_CPU_DESCRIPTOR_HANDLE Increment();
 		inline D3D12_CPU_DESCRIPTOR_HANDLE Get() { return m_handle; }
 	};
 
@@ -32,8 +32,8 @@ public:
 		GPUHandle() = default;
 		GPUHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle, const std::vector<int>& rootArgumentsOffset);
 
-		void Increment();
-		void ResetToGraphicsRootDescriptorTableStart();
+		D3D12_GPU_DESCRIPTOR_HANDLE ResetToGraphicsRootDescriptorTableStart();
+		D3D12_GPU_DESCRIPTOR_HANDLE Increment();
 		inline D3D12_GPU_DESCRIPTOR_HANDLE Get() { return m_handle; }
 	};
 
