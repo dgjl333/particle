@@ -32,9 +32,8 @@ inline void EnableDebug()
 	spDebugController0->QueryInterface(IID_PPV_ARGS(&spDebugController1));
 	spDebugController1->SetEnableGPUBasedValidation(true);
 
-	ID3D12Debug* debug = nullptr;
-	HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
+	ComPtr<ID3D12Debug> debug = nullptr;
+	D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
 	debug->EnableDebugLayer();
-	debug->Release();
 #endif
 }

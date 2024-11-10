@@ -9,21 +9,20 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 {
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) return true;
 	
-
-	if (msg == WM_DESTROY)
-	{	
+	switch (msg)
+	{
+	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+	default:
+		return DefWindowProc(hwnd, msg, wparam, lparam);
 	}
-	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-void Window::Init(float size)
+void Window::Init()
 {
-	//m_height = GetSystemMetrics(SM_CYSCREEN)* size;
-	//m_width = GetSystemMetrics(SM_CXSCREEN) * size;
-	s_height = 1080 * size;         //set a fixed size for now
-	s_width = 1920 * size;
+	s_height = GetSystemMetrics(SM_CYSCREEN);
+	s_width = GetSystemMetrics(SM_CXSCREEN);
 
 	s_wc.cbSize = sizeof(WNDCLASSEX);
 	s_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
@@ -33,7 +32,7 @@ void Window::Init(float size)
 	RECT rect = { 0, 0, s_width, s_height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Window", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, s_wc.hInstance, nullptr);
+	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Particle", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, s_wc.hInstance, nullptr);
 
 	if (s_hwnd == NULL)
 	{
@@ -41,7 +40,11 @@ void Window::Init(float size)
 		exit(1);
 	}
 
-	ShowWindow(s_hwnd, SW_SHOW);
+	LONG style = GetWindowLong(s_hwnd, GWL_STYLE);
+	style &= ~WS_THICKFRAME;      // Remove the resize
+	SetWindowLong(s_hwnd, GWL_STYLE, style);
+
+	ShowWindow(s_hwnd, SW_SHOWMAXIMIZED);
 }
 
 bool Window::Update()

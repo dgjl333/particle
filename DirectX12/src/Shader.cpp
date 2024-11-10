@@ -5,6 +5,7 @@
 #include <d3dcompiler.h>
 #include "GraphicDevice.h"
 #include "Time.h"
+#include "Random.h"
 
 #ifdef _DEBUG
 	UINT Shader::s_compileFlag = D3DCOMPILE_DEBUG;
@@ -58,8 +59,7 @@ Shader::~Shader()
 }
 
 Shader::SharedInput Shader::s_sharedInput = {};
-ComPtr<ID3D12Resource> Shader::s_sharedConstantBufferResource = nullptr;
-void* Shader::s_CBMap = nullptr;
+std::unique_ptr<ConstantBuffer> Shader::s_constantBuffer = nullptr;
 
 void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 {
@@ -70,29 +70,26 @@ void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 	matrix.r[3].m128_f32[1] = -1.0f;
 
 	s_sharedInput.projectionMatrix = matrix;
+	s_sharedInput.seed = Random::GetValue();
 
-	D3D12_RESOURCE_DESC matrixDesc = Utils::ResourceDesc(Utils::AlignSize256(sizeof(SharedInput)));
-	GraphicDevice::GetDevice()->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &matrixDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&s_sharedConstantBufferResource));
+	D3D12_RANGE range = {};
+	range.Begin = 0;
+	range.End = offsetof(SharedInput, projectionMatrix);
 
-	s_sharedConstantBufferResource->Map(0, nullptr, &s_CBMap);
-	memcpy(s_CBMap, &s_sharedInput, sizeof(SharedInput));
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-	cbvDesc.BufferLocation = s_sharedConstantBufferResource->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = s_sharedConstantBufferResource->GetDesc().Width;
-
-	GraphicDevice::GetDevice()->CreateConstantBufferView(&cbvDesc, cpuHandle.Get());
+	s_constantBuffer = std::make_unique<ConstantBuffer>((void*)&s_sharedInput, sizeof(SharedInput));
+	s_constantBuffer.get()->Map(range);
+	GraphicDevice::GetDevice()->CreateConstantBufferView(&s_constantBuffer.get()->GetDesc(), cpuHandle.Get());
 	cpuHandle.Increment();
 }
 
 void Shader::UpdateSharedResources(ID3D12GraphicsCommandList* cmdList)
 {
-	cmdList->SetGraphicsRootConstantBufferView(0, s_sharedConstantBufferResource->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootConstantBufferView(0, s_constantBuffer.get()->GetResource()->GetGPUVirtualAddress());
 
 	float time = Time::GetTime();
 	s_sharedInput.time = float4(time / 20, time, time * 2, time * 3);
 	s_sharedInput.deltaTime = Time::GetDeltaTime();
-	memcpy(s_CBMap, &s_sharedInput, sizeof(SharedInput));
+	s_constantBuffer.get()->Update((void*)&s_sharedInput);
 }
 
 ID3DBlob* Shader::CompileComputeShader(const std::string& filePath)

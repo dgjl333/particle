@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <d3d12.h>
+#include <memory>
 #include <wrl/client.h> 
 #include "Descriptor.h"
 #include "CommonData.h"
+#include "ConstantBuffer.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -24,7 +26,7 @@ public:
 
 	static ID3DBlob* CompileComputeShader(const std::string& filePath);
 
-	static D3D12_GPU_VIRTUAL_ADDRESS GetSharedConstantBufferGpuAddress() { return s_sharedConstantBufferResource->GetGPUVirtualAddress(); }
+	static D3D12_GPU_VIRTUAL_ADDRESS GetSharedConstantBufferGpuAddress() { return s_constantBuffer.get()->GetResource()->GetGPUVirtualAddress(); }
 
 private:
 	ID3DBlob* m_vsBlob;
@@ -35,13 +37,13 @@ private:
 
 	struct SharedInput
 	{
-		DirectX::XMMATRIX projectionMatrix;
-
 		float4 time;
 		float deltaTime;
+
+		DirectX::XMMATRIX projectionMatrix;
+		float seed;
 	};
 
+	static std::unique_ptr<ConstantBuffer> s_constantBuffer;
 	static SharedInput s_sharedInput;
-	static ComPtr<ID3D12Resource> s_sharedConstantBufferResource;
-	static void* s_CBMap;
 };

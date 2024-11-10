@@ -16,7 +16,7 @@ public:
 	Window() = delete;
 	~Window() = delete;
 
-	static void Init(float size);
+	static void Init();
 
 	static bool Update();
 
