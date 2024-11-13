@@ -44,7 +44,7 @@ Texture::Texture(const std::string& filePath) :
 
 	Upload(img, uploadBuffer);
 
-	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::ResourceBarrier(m_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::CreateResourceBarrier(m_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	Renderer::ExecuteCommands(&texBarrierDesc);
 	Renderer::WaitForFrame();
@@ -54,27 +54,11 @@ Texture::Texture(const std::string& filePath) :
 void Texture::CreateResource(const DirectX::Image* img, ID3D12Resource** uploadBuffer)
 {
 	UINT64 width = Utils::AlignSize256(img->rowPitch) * img->height;
-	D3D12_RESOURCE_DESC uploadResourceDesc = Utils::ResourceDesc(width);
-	GraphicDevice::GetDevice()->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
+	D3D12_RESOURCE_DESC uploadResourceDesc = Utils::CreateResourceDesc(width);
+	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
+	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
 
-	D3D12_RESOURCE_DESC textureDesc = {};
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.Width = m_metaData.width;
-	textureDesc.Height = m_metaData.height;
-	textureDesc.DepthOrArraySize = m_metaData.arraySize;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.MipLevels = m_metaData.mipLevels;
-	textureDesc.Dimension = (D3D12_RESOURCE_DIMENSION)m_metaData.dimension;
-	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-	D3D12_HEAP_PROPERTIES texHeapProp = {};
-	texHeapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
-	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	texHeapProp.CreationNodeMask = 0;
-	texHeapProp.VisibleNodeMask = 0;
+	D3D12_HEAP_PROPERTIES defaultProp = Utils::HeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
 	D3D12_RESOURCE_DESC uploadDesc = {};
 	uploadDesc.Format = m_metaData.format;
@@ -87,7 +71,7 @@ void Texture::CreateResource(const DirectX::Image* img, ID3D12Resource** uploadB
 	uploadDesc.SampleDesc.Quality = 0;
 	uploadDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
-	GraphicDevice::GetDevice()->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_buffer));
+	GraphicDevice::GetDevice()->CreateCommittedResource(&defaultProp, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_buffer));
 }
 
 void Texture::Upload(const DirectX::Image* img, ID3D12Resource* uploadBuffer)

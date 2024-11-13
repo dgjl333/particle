@@ -112,6 +112,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d12.lib;dxgi.lib;d3dcompiler.lib;DirectXTex.lib</AdditionalDependencies>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
     </Link>
     <FxCompile>
       <EntryPointName>frag</EntryPointName>
@@ -135,12 +137,14 @@
       <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\Release</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d12.lib;dxgi.lib;d3dcompiler.lib;DirectXTex.lib</AdditionalDependencies>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
     </Link>
     <FxCompile>
       <EntryPointName>frag</EntryPointName>
@@ -165,6 +169,7 @@
     <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\ParticleRenderer.cpp" />
     <ClCompile Include="src\Random.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -192,6 +197,7 @@
     <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\CommonData.h" />
     <ClInclude Include="src\IndexBuffer.h" />
+    <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Random.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\RootSignature.h" />

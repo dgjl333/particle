@@ -101,7 +101,7 @@ float4 frag(g2f i) : SV_TARGET
     float2 uv = i.uv * 2 - 1;
     float dist = length(uv);
     
-    float h = 0.5 * (sin( + _Time.y * 0.1 + _Seed * 2 * PI) + 1);
+    float h = 0.5 * (sin(0.4 * (i.screenPos.x + i.screenPos.y) + _Time.y * 0.1 + _Seed * 2 * PI) + 1);
     float s = lerp(0.35, 0.75, smoothstep(15, 150, length(i.velocity)));
     
     float2 border = min(i.screenPos, 1 - i.screenPos);

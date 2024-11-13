@@ -1,28 +1,45 @@
 #include "Window.h"
 #include "Debug.h"
 #include "GUI.h"
+#include "Input.h"
 #include "imgui/imgui_impl_win32.h"
+#include "CommonData.h"
+#include <windowsx.h>
+#include <format>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lParam)
 {
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) return true;
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lParam)) return true;
 	
 	switch (msg)
 	{
+	case WM_MOUSEMOVE:
+	{
+		float x = GET_X_LPARAM(lParam);
+		float y = s_height - GET_Y_LPARAM(lParam);
+		GUI::Debug(std::format("x {} y {}", x, y));
+		return 0;
+	}
+	case WM_LBUTTONDOWN:
+		Input::UpdateMouseState(true);
+		return 0;
+	case WM_LBUTTONUP:
+		Input::UpdateMouseState(false);
+		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 	default:
-		return DefWindowProc(hwnd, msg, wparam, lparam);
+		return DefWindowProc(hwnd, msg, wparam, lParam);
 	}
 }
 
 void Window::Init()
 {
-	s_height = GetSystemMetrics(SM_CYSCREEN);
-	s_width = GetSystemMetrics(SM_CXSCREEN);
+	s_height = GetSystemMetrics(SM_CYFULLSCREEN);
+	s_width = GetSystemMetrics(SM_CXFULLSCREEN);
 
 	s_wc.cbSize = sizeof(WNDCLASSEX);
 	s_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
@@ -31,7 +48,7 @@ void Window::Init()
 	RegisterClassEx(&s_wc);
 	RECT rect = { 0, 0, s_width, s_height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
-
+	
 	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Particle", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, s_wc.hInstance, nullptr);
 
 	if (s_hwnd == NULL)

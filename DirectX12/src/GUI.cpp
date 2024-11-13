@@ -5,8 +5,11 @@
 #include "Utils.h"
 #include "Window.h"
 #include "GraphicDevice.h"
+#include <format>
 
 ID3D12DescriptorHeap* GUI::s_descriptorHeap = nullptr;
+std::vector<std::string> GUI::s_debugMessages;
+std::vector<int> GUI::s_debugMessagesCount;
 
 void GUI::Init()
 {
@@ -39,7 +42,32 @@ void GUI::Update()
 	ImGui::Begin("FPS Counter", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize |
 		ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground);
 	ImGui::Text("%d", (int)ImGui::GetIO().Framerate);
+
 	ImGui::End();
+#ifdef _DEBUG
+	ImGui::Begin("Debug Info", nullptr, ImGuiWindowFlags_MenuBar);
+
+	static bool autoScroll = true;
+
+	if (ImGui::BeginMenuBar())
+	{
+		ImGui::MenuItem("Auto scroll", nullptr, &autoScroll, true);
+		ImGui::EndMenuBar();
+	}
+
+	if (autoScroll)
+	{
+		ImGui::SetScrollFromPosY(10000000);  
+	}
+
+	for (int i = 0; i < s_debugMessages.size(); i++)
+	{
+		std::string text = s_debugMessagesCount[i] == 1 ? s_debugMessages[i] : std::format("{} ({})", s_debugMessages[i], s_debugMessagesCount[i]);
+		ImGui::Text(text.c_str());
+	}
+
+	ImGui::End();
+#endif
 }
 
 void GUI::Render(ID3D12GraphicsCommandList* cmdList)
@@ -60,4 +88,5 @@ void GUI::Destroy()
 		s_descriptorHeap = nullptr;
 	}
 }
+
 

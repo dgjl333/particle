@@ -19,11 +19,16 @@
 #include "RootSignature.h"
 #include "Descriptor.h"
 #include "ConstantBuffer.h"
+#include "Input.h"
 #include "../shader/ParticleData.hlsli"
 
 using namespace DirectX;
 
+#ifdef _DEBUG
 int main()
+#else
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+#endif 
 {
 	EnableDebug();
 
@@ -146,14 +151,16 @@ int main()
 		particles[i].position = { Random::Range(0.0f, (float)Window::GetWidth()), Random::Range(0.0f, (float)Window::GetHeight()) };
 	}
 
-	D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	D3D12_RESOURCE_DESC particleUploadDesc = Utils::ResourceDesc(particleCount * sizeof(Particle));
+	D3D12_RESOURCE_DESC particleDesc = Utils::CreateResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	D3D12_RESOURCE_DESC particleUploadDesc = Utils::CreateResourceDesc(particleCount * sizeof(Particle));
 
+	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
+	D3D12_HEAP_PROPERTIES defaultProp = Utils::HeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 	ID3D12Resource* particleBuffer;
-	device->CreateCommittedResource(&Utils::heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &particleDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&particleBuffer));
+	device->CreateCommittedResource(&defaultProp, D3D12_HEAP_FLAG_NONE, &particleDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&particleBuffer));
 
 	ID3D12Resource* particleUploadBuffer;
-	device->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &particleUploadDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&particleUploadBuffer));
+	device->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &particleUploadDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&particleUploadBuffer));
 
 	void* particleMap;
 	particleUploadBuffer->Map(0, nullptr, &particleMap);
@@ -162,7 +169,7 @@ int main()
 
 	cmdList->CopyResource(particleBuffer, particleUploadBuffer);
 
-	auto particleBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	auto particleBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	Renderer::ExecuteCommands(&particleBarrier);
 	Renderer::WaitForFrame();
 
@@ -251,21 +258,21 @@ int main()
 		cmdList->SetDescriptorHeaps(1, &descriptor.GetHeap());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		//cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
-		//cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
-		//cmdList->IASetIndexBuffer(&ib.GetView());
-		//cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
+		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
+		cmdList->IASetIndexBuffer(&ib.GetView());
+		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
 		cmdList->SetComputeRootDescriptorTable(2, gpuHandle.Increment());
 
-		auto preBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		auto preBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		cmdList->ResourceBarrier(1, &preBarrier);
 		cmdList->Dispatch(particleCount / PARTICLE_NUMTHREADS, 1, 1);
 
-		auto postBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+		auto postBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		cmdList->ResourceBarrier(1, &postBarrier);
 		cmdList->SetGraphicsRootDescriptorTable(3, gpuHandle.Increment());
 		cmdList->SetPipelineState(particlePipelineState);
@@ -277,10 +284,12 @@ int main()
 		Renderer::ExecuteCommands();
 		Renderer::WaitForFrame();
 		Renderer::Render();
+		Input::ClearStates();
 	}
 	Renderer::Destroy();
 	GraphicDevice::Destroy();
 	Window::Destroy();
+	return 0;
 }
 
 

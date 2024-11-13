@@ -11,24 +11,18 @@ namespace Utils
 		 return (size+ 255) & ~255;
 	}
 
+	inline D3D12_HEAP_PROPERTIES HeapProperties(D3D12_HEAP_TYPE type)
+	{
+		D3D12_HEAP_PROPERTIES prop = {};
+		prop.Type = type;
+		prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		prop.CreationNodeMask = 0;
+		prop.VisibleNodeMask = 0;
+		return prop;
+	}
 
-	inline D3D12_HEAP_PROPERTIES heapPropertiesUpload = {
-		D3D12_HEAP_TYPE_UPLOAD,                 // Type
-		D3D12_CPU_PAGE_PROPERTY_UNKNOWN,        // CPUPageProperty
-		D3D12_MEMORY_POOL_UNKNOWN,              // MemoryPoolPreference
-		0,                                      // CreationNodeMask
-		0                                       // VisibleNodeMask
-	};
-
-	inline D3D12_HEAP_PROPERTIES heapPropertiesDefault = {
-		D3D12_HEAP_TYPE_DEFAULT,               
-		D3D12_CPU_PAGE_PROPERTY_UNKNOWN,      
-		D3D12_MEMORY_POOL_UNKNOWN,            
-		0,                                    
-		0                                      
-	};
-
-	 inline D3D12_RESOURCE_DESC ResourceDesc(UINT64 width, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
+	 inline D3D12_RESOURCE_DESC CreateResourceDesc(UINT64 width, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
 	{
 		D3D12_RESOURCE_DESC desc = {};
 		desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -44,7 +38,7 @@ namespace Utils
 		return desc;
 	}
 
-	 inline D3D12_RESOURCE_BARRIER ResourceBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+	 inline D3D12_RESOURCE_BARRIER CreateResourceBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 	 {
 		 D3D12_RESOURCE_BARRIER barrier = {};
 		 barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

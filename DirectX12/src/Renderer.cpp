@@ -88,8 +88,8 @@ void Renderer::Init()
 	s_scissorRect.right = s_scissorRect.left + Window::GetWidth();
 	s_scissorRect.bottom = s_scissorRect.top + Window::GetHeight();
 
-	s_barrierRtv = Utils::ResourceBarrier(nullptr, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	s_barrierPresent = Utils::ResourceBarrier(nullptr, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	s_barrierRtv = Utils::CreateResourceBarrier(nullptr, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	s_barrierPresent = Utils::CreateResourceBarrier(nullptr, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void Renderer::Update()

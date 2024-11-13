@@ -6,8 +6,9 @@ IndexBuffer::IndexBuffer(const std::vector<unsigned int>& indices):
 	m_buffer(nullptr), m_view{}
 {
 	UINT64 totalSize = indices.size() * sizeof(unsigned int);
-	D3D12_RESOURCE_DESC resourceDesc = Utils::ResourceDesc(totalSize);
-	GraphicDevice::GetDevice()->CreateCommittedResource(&Utils::heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_buffer));
+	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(totalSize);
+	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
+	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_buffer));
 
 	unsigned int* indexMap = nullptr;
 	m_buffer->Map(0, nullptr, (void**)&indexMap);
