@@ -19,6 +19,7 @@ struct g2f
     float4 position : SV_Position;
     float2 uv : TEXCOORD0;
     float2 velocity : TEXCOORD1;
+    float2 screenPos : TEXCOORD2;
 };
 
 struct Particle
@@ -29,12 +30,19 @@ struct Particle
 
 StructuredBuffer<Particle> particles : register(t2);
 
-float rand(float2 p)
+float Rand(float2 p)
 {
     p = frac(p * float2(123.34, 345.45));
     p += dot(p, p + 34.345);
     return frac(p.x * p);
 }
+
+float2 ComputeScreenPos(float4 pos)
+{
+    float2 xy = (pos.xy + pos.w) * 0.5;
+    return xy / pos.w;
+}
+
 
 v2g vert(vIn i)
 {
@@ -51,28 +59,30 @@ void geom(point v2g input[1], inout TriangleStream<g2f> stream)
     float2 velocity = input[0].velocity;
     g2f o;
     
+    o.velocity = velocity;
+    
     float4 lowerLeft = pos + float4(-s_size, -s_size, 0, 0);
     o.position = mul(_ProjectionMatrix, lowerLeft);
+    o.screenPos = ComputeScreenPos(o.position);
     o.uv = float2(0, 0);
-    o.velocity = velocity;
     stream.Append(o);
     
     float4 lowerRight = pos + float4(s_size, -s_size, 0, 0);
     o.position = mul(_ProjectionMatrix, lowerRight);
+    o.screenPos = ComputeScreenPos(o.position);
     o.uv = float2(1, 0);
-    o.velocity = velocity;
     stream.Append(o);
     
     float4 upperLeft = pos + float4(-s_size, s_size, 0, 0);
     o.position = mul(_ProjectionMatrix, upperLeft);
+    o.screenPos = ComputeScreenPos(o.position);
     o.uv = float2(0, 1);
-    o.velocity = velocity;
     stream.Append(o);
     
     float4 upperRight = pos + float4(s_size, s_size, 0, 0);
     o.position = mul(_ProjectionMatrix, upperRight);
+    o.screenPos = ComputeScreenPos(o.position);
     o.uv = float2(1, 1);
-    o.velocity = velocity;
     stream.Append(o);
     
     stream.RestartStrip();
@@ -91,10 +101,15 @@ float4 frag(g2f i) : SV_TARGET
     float2 uv = i.uv * 2 - 1;
     float dist = length(uv);
     
-    float h = 0.5 * (sin(_Time.y * 0.1 + _Seed * 2 * PI) + 1);
+    float h = 0.5 * (sin( + _Time.y * 0.1 + _Seed * 2 * PI) + 1);
     float s = lerp(0.35, 0.75, smoothstep(15, 150, length(i.velocity)));
-    float3 rgb = hsl2rgb(float3(h, s, 0.5));
-    float4 color = lerp(float4(rgb, 1), 0, smoothstep(0.01, 1, dist));
     
-    return color;
+    float2 border = min(i.screenPos, 1 - i.screenPos);
+    float l = lerp(0.0, 0.5, smoothstep(0.002, 0.015, min(border.x, border.y)));
+    
+    float3 rgb = hsl2rgb(float3(h, s, l));
+    
+    float clip = smoothstep(0.01, 1, dist);
+    
+    return lerp(float4(rgb, 1), 0, clip);
 }
