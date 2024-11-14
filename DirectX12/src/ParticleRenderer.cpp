@@ -20,6 +20,7 @@
 #include "Descriptor.h"
 #include "ConstantBuffer.h"
 #include "Input.h"
+#include "imgui/imgui.h"
 #include "../shader/ParticleData.hlsli"
 
 using namespace DirectX;
@@ -133,12 +134,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	struct ParticleInput
 	{
-		float test;
+		float2 mousePos;
+		float strength;
 	};
 
-	ParticleInput particleInput = {};
-	particleInput.test = 1;
+	ParticleInput particleInput = { {0,0}, 0 };
 	ConstantBuffer particleInputBuffer((void*)&particleInput, sizeof(ParticleInput));
+	particleInputBuffer.Map(nullptr);
 	cpuHandle.Increment();
 	device->CreateConstantBufferView(&particleInputBuffer.GetDesc(), cpuHandle.Get());
 
@@ -258,10 +260,26 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetDescriptorHeaps(1, &descriptor.GetHeap());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
+		/*cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
 		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
 		cmdList->IASetIndexBuffer(&ib.GetView());
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);*/
+		if (Input::GetMouseButtonDown())
+		{
+			particleInput.strength = 1;
+			GUI::Debug("Down");
+		}
+		if (Input::GetMouseButtonUp())
+		{
+			particleInput.strength = 0;
+			GUI::Debug("Up");
+		}
+		if (Input::GetMouseButton())
+		{
+			particleInput.mousePos = Input::GetMousePosition();
+			//GUI::Debug(std::format("x {} y {}", Input::GetMousePosition().x, Input::GetMousePosition().y));
+		}
+		particleInputBuffer.Update(&particleInput);
 
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);

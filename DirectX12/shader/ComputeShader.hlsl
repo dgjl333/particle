@@ -12,7 +12,8 @@ RWStructuredBuffer<Particle> particles : register(u1);
 
 cbuffer Data : register(b2)
 {
-    float _Test;
+    float2 _MousePos;
+    float _ForceStrength;
 };
 
 float2 curlNoise(float2 p)
@@ -28,9 +29,13 @@ void CSMain(uint3 DTid : SV_DispatchThreadID)
     Particle p = particles[index];
     
     float t = _Time.y * 0.5;
+    
+    float2 offset = p.position - _MousePos;
+    float2 constantForce = 1 / (pow(length(offset), 2) + 0.5) * normalize(offset);
+    
     float2 curl = curlNoise(p.position * s_noiseScale + _Seed * 1000);
     p.velocity += curl * _DeltaTime * s_noiseStrength;
-    
+    p.velocity += constantForce * _DeltaTime * _ForceStrength * 10000000;
     p.velocity.y += 0.5 * (sin(t) + 0.2 * cos(t + cos(2 * t + 1)));
 
     float drag = s_viscosity * length(p.velocity) * _DeltaTime;

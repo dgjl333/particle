@@ -1,9 +1,11 @@
 #include "Input.h"
 #include "GUI.h"
+#include "imgui/imgui.h"
 
 bool Input::s_mouseLeftDown = false;
 bool Input::s_mouseLeftEnterDown = false;
 bool Input::s_mouseLeftEnterUp = false;
+float2 Input::s_mousePos;
 
 void Input::ClearStates()
 {
@@ -13,6 +15,8 @@ void Input::ClearStates()
 
 void Input::UpdateMouseState(bool isButtonDown)
 {
+	if (ImGui::GetIO().WantCaptureMouse) return;
+
 	if (s_mouseLeftDown == isButtonDown)
 	{
 		return;
@@ -32,5 +36,5 @@ void Input::UpdateMouseState(bool isButtonDown)
 
 void Input::UpdateMousePosition(float2 pos)
 {
-
+	s_mousePos = pos;
 }

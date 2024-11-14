@@ -8,6 +8,7 @@ private:
 	static bool s_mouseLeftDown;
 	static bool s_mouseLeftEnterDown;
 	static bool s_mouseLeftEnterUp;
+	static float2 s_mousePos;
 
 public:
 	static void ClearStates();
@@ -21,4 +22,6 @@ public:
 	static bool GetMouseButtonDown() { return s_mouseLeftEnterDown; }
 
 	static bool GetMouseButtonUp() { return s_mouseLeftEnterUp; }
+
+	static float2 GetMousePosition() { return s_mousePos; }
 };

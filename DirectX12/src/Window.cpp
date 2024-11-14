@@ -19,7 +19,7 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lPara
 	{
 		float x = GET_X_LPARAM(lParam);
 		float y = s_height - GET_Y_LPARAM(lParam);
-		GUI::Debug(std::format("x {} y {}", x, y));
+		Input::UpdateMousePosition({ x,y });
 		return 0;
 	}
 	case WM_LBUTTONDOWN:

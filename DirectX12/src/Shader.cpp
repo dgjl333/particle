@@ -77,7 +77,7 @@ void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 	range.End = offsetof(SharedInput, projectionMatrix);
 
 	s_constantBuffer = std::make_unique<ConstantBuffer>((void*)&s_sharedInput, sizeof(SharedInput));
-	s_constantBuffer.get()->Map(range);
+	s_constantBuffer.get()->Map(&range);
 	GraphicDevice::GetDevice()->CreateConstantBufferView(&s_constantBuffer.get()->GetDesc(), cpuHandle.Get());
 	cpuHandle.Increment();
 }

@@ -14,6 +14,6 @@ static float4 s_red = float4(0.749019, 0.098039, 0.011764, 1);
 static float s_noiseStrength = 75;
 static float s_noiseScale = 0.005;
 static float s_viscosity = 0.025;
-static float s_damping = 0.2;
+static float s_damping = 0.8;
 
 #endif
