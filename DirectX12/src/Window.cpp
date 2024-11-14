@@ -23,10 +23,22 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lPara
 		return 0;
 	}
 	case WM_LBUTTONDOWN:
-		Input::UpdateMouseState(true);
+		Input::UpdateMouseState(MouseButton::LEFT, true);
 		return 0;
 	case WM_LBUTTONUP:
-		Input::UpdateMouseState(false);
+		Input::UpdateMouseState(MouseButton::LEFT, false);
+		return 0;
+	case WM_RBUTTONDOWN:
+		Input::UpdateMouseState(MouseButton::RIGHT, true);
+		return 0;
+	case WM_RBUTTONUP:
+		Input::UpdateMouseState(MouseButton::RIGHT, false);
+		return 0;
+	case WM_MBUTTONDOWN:
+		Input::UpdateMouseState(MouseButton::MIDDLE, true);
+		return 0;
+	case WM_MBUTTONUP:
+		Input::UpdateMouseState(MouseButton::MIDDLE, false);
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
