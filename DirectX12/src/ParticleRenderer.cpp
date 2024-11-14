@@ -264,17 +264,28 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
 		cmdList->IASetIndexBuffer(&ib.GetView());
 		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);*/
-		if (Input::GetMouseButtonDown())
+		if (Input::GetMouseButtonDown(MouseButton::LEFT))
 		{
-			particleInput.strength = 1;
-			GUI::Debug("Down");
+			particleInput.strength++;
+			GUI::Debug("Left Down");
 		}
-		if (Input::GetMouseButtonUp())
+		if (Input::GetMouseButtonUp(MouseButton::LEFT))
 		{
-			particleInput.strength = 0;
-			GUI::Debug("Up");
+			particleInput.strength--;
+			GUI::Debug("Left Up");
 		}
-		if (Input::GetMouseButton())
+		if (Input::GetMouseButtonDown(MouseButton::RIGHT))
+		{
+			particleInput.strength--;
+			GUI::Debug("Right Down");
+		}
+		if (Input::GetMouseButtonUp(MouseButton::RIGHT))
+		{
+			particleInput.strength++;
+			GUI::Debug("Right Up");
+		}
+
+		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
 		{
 			particleInput.mousePos = Input::GetMousePosition();
 			//GUI::Debug(std::format("x {} y {}", Input::GetMousePosition().x, Input::GetMousePosition().y));

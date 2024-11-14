@@ -22,7 +22,7 @@ float2 curlNoise(float2 p)
     return float2(-grad.y, grad.x);
 }
 
-[numthreads(32, 1, 1)]
+[numthreads(PARTICLE_NUMTHREADS, 1, 1)]
 void CSMain(uint3 DTid : SV_DispatchThreadID)
 {
     uint index = DTid.x;

@@ -1,27 +1,38 @@
 #pragma once
 
+#include <array>
 #include "CommonData.h"
+
+enum class MouseButton
+{
+	LEFT, RIGHT, MIDDLE
+};
+
 
 class Input
 {
+public:
+	static constexpr int mouseButton_count = 3;
+
 private:
-	static bool s_mouseLeftDown;
-	static bool s_mouseLeftEnterDown;
-	static bool s_mouseLeftEnterUp;
+	static std::array<bool, mouseButton_count> s_mouseDown;
+	static std::array<bool, mouseButton_count> s_mouseEnterDown;
+	static std::array<bool, mouseButton_count> s_mouseEnterUp;
 	static float2 s_mousePos;
 
 public:
+
 	static void ClearStates();
 
-	static void UpdateMouseState(bool isButtonDown);
+	static void UpdateMouseState(MouseButton button, bool isButtonDown);
 
 	static void UpdateMousePosition(float2 pos);
 
-	static bool GetMouseButton() { return s_mouseLeftDown; }
+	static bool GetMouseButton(MouseButton button) { return s_mouseDown[(int)button]; }
 
-	static bool GetMouseButtonDown() { return s_mouseLeftEnterDown; }
+	static bool GetMouseButtonDown(MouseButton button) { return s_mouseEnterDown[(int)button]; }
 
-	static bool GetMouseButtonUp() { return s_mouseLeftEnterUp; }
+	static bool GetMouseButtonUp(MouseButton button) { return s_mouseEnterUp[(int)button]; }
 
 	static float2 GetMousePosition() { return s_mousePos; }
 };
