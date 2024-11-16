@@ -15,7 +15,6 @@ inline RangeType operator|(RangeType a, RangeType b)
 	return (RangeType)((int)a | (int)b);
 }
 
-
 class RootSignature
 {
 private:

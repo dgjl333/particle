@@ -4,7 +4,7 @@
 #include <memory>
 #include <wrl/client.h> 
 #include "Descriptor.h"
-#include "CommonData.h"
+#include "MathType.h"
 #include "ConstantBuffer.h"
 
 using Microsoft::WRL::ComPtr;

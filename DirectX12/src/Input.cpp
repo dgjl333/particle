@@ -1,5 +1,4 @@
 #include "Input.h"
-#include "GUI.h"
 #include "imgui/imgui.h"
 
 std::array<bool, Input::mouseButton_count> Input::s_mouseDown = {false, false, false};

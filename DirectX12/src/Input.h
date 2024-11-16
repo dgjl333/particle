@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include "CommonData.h"
+#include "MathType.h"
 
 enum class MouseButton
 {

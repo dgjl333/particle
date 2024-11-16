@@ -3,7 +3,7 @@
 #include "GUI.h"
 #include "Input.h"
 #include "imgui/imgui_impl_win32.h"
-#include "CommonData.h"
+#include "MathType.h"
 #include <windowsx.h>
 #include <format>
 

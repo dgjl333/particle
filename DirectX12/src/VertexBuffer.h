@@ -1,7 +1,8 @@
 #pragma once
 #include <d3d12.h>
 #include <vector>
-#include "CommonData.h"
+#include "Vertex.h"
+
 
 class VertexBuffer
 {

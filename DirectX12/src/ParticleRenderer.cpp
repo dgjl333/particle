@@ -3,12 +3,11 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
-#include "CommonData.h"
+#include "MathType.h"
 #include "Utils.h"
 #include "Shader.h"
 #include "Window.h"
 #include "GraphicDevice.h"
-#include "Utils.h"
 #include "GUI.h"
 #include "Renderer.h"
 #include "Texture.h"
@@ -260,36 +259,43 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetDescriptorHeaps(1, &descriptor.GetHeap());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		/*cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
+
+		float2 mousePos = Input::GetMousePosition();
+		float size = 50;
+		vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
+		vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
+		vertices[2].position = float3(mousePos.x + size, mousePos.y - size, 0);
+		vertices[3].position = float3(mousePos.x - size, mousePos.y + size, 0);
+
+		cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
 		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
 		cmdList->IASetIndexBuffer(&ib.GetView());
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);*/
+		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
+		{
+			particleInput.mousePos = mousePos;
+		}
+
+		static MouseButton activeButton;
 		if (Input::GetMouseButtonDown(MouseButton::LEFT))
 		{
-			particleInput.strength++;
-			GUI::Debug("Left Down");
+			activeButton = MouseButton::LEFT;
+			particleInput.strength = 1;
 		}
-		if (Input::GetMouseButtonUp(MouseButton::LEFT))
+		if (activeButton == MouseButton::LEFT && Input::GetMouseButtonUp(MouseButton::LEFT))
 		{
-			particleInput.strength--;
-			GUI::Debug("Left Up");
+			particleInput.strength = 0;
 		}
 		if (Input::GetMouseButtonDown(MouseButton::RIGHT))
 		{
-			particleInput.strength--;
-			GUI::Debug("Right Down");
+			activeButton = MouseButton::RIGHT;
+			particleInput.strength = -2;
 		}
-		if (Input::GetMouseButtonUp(MouseButton::RIGHT))
+		if (activeButton == MouseButton::RIGHT && Input::GetMouseButtonUp(MouseButton::RIGHT))
 		{
-			particleInput.strength++;
-			GUI::Debug("Right Up");
+			particleInput.strength = 0;
 		}
 
-		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
-		{
-			particleInput.mousePos = Input::GetMousePosition();
-			//GUI::Debug(std::format("x {} y {}", Input::GetMousePosition().x, Input::GetMousePosition().y));
-		}
 		particleInputBuffer.Update(&particleInput);
 
 		cmdList->SetComputeRootSignature(rootSignature.Get());

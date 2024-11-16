@@ -16,26 +16,30 @@ cbuffer Data : register(b2)
     float _ForceStrength;
 };
 
-float2 curlNoise(float2 p)
+float2 ConstantForce(float2 p)
+{
+    float2 offset = p - _MousePos;
+    float distance = length(offset);
+    return 1 / (pow(distance, 2) + 1) * normalize(offset) * _ForceStrength * 500000;
+}
+
+float2 CurlNoise(float2 p)
 {
     float2 grad = SimplexNoiseGrad(p).xy;
     return float2(-grad.y, grad.x);
 }
 
 [numthreads(PARTICLE_NUMTHREADS, 1, 1)]
-void CSMain(uint3 DTid : SV_DispatchThreadID)
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    uint index = DTid.x;
+    uint index = id.x;
     Particle p = particles[index];
     
     float t = _Time.y * 0.5;
     
-    float2 offset = p.position - _MousePos;
-    float2 constantForce = 1 / (pow(length(offset), 2) + 0.5) * normalize(offset);
-    
-    float2 curl = curlNoise(p.position * s_noiseScale + _Seed * 1000);
+    float2 curl = CurlNoise(p.position * s_noiseScale + _Seed * 1000);
     p.velocity += curl * _DeltaTime * s_noiseStrength;
-    p.velocity += constantForce * _DeltaTime * _ForceStrength * 10000000;
+    p.velocity += ConstantForce(p.position) * _DeltaTime * 7.5;
     p.velocity.y += 0.5 * (sin(t) + 0.2 * cos(t + cos(2 * t + 1)));
 
     float drag = s_viscosity * length(p.velocity) * _DeltaTime;
