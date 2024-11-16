@@ -12,12 +12,18 @@ using Microsoft::WRL::ComPtr;
 class Shader
 {
 public:
-	Shader(const std::string& filePath, bool hasGeometryShader = false);
-	~Shader();
+	enum class BlendType
+	{
+		Off, Alpha, Addictive
+	};
 
-	ID3DBlob* GetVS() { return m_vsBlob; }
-	ID3DBlob* GetPS() { return m_psBlob; }
-	ID3DBlob* GetGS() { return m_gsBlob; }
+	Shader(const std::string& filePath, BlendType type, bool hasGeometryShader = false);
+
+	ID3DBlob* GetVS() const { return m_vsBlob.Get(); }
+	ID3DBlob* GetPS() const { return m_psBlob.Get(); }
+	ID3DBlob* GetGS() const { return m_gsBlob.Get(); }
+
+	BlendType GetBlendType() const { return m_blendType; }
 
 	static void ErrorCheck(const std::string& errorShader, const HRESULT& compileResult, ID3DBlob* errorBlob);
 
@@ -29,9 +35,11 @@ public:
 	static D3D12_GPU_VIRTUAL_ADDRESS GetSharedConstantBufferGpuAddress() { return s_constantBuffer.get()->GetResource()->GetGPUVirtualAddress(); }
 
 private:
-	ID3DBlob* m_vsBlob;
-	ID3DBlob* m_psBlob;
-	ID3DBlob* m_gsBlob;
+	ComPtr<ID3DBlob> m_vsBlob;
+	ComPtr<ID3DBlob> m_psBlob;
+	ComPtr<ID3DBlob> m_gsBlob;
+
+	BlendType m_blendType;
 
 	static UINT s_compileFlag;
 

@@ -19,6 +19,7 @@
 #include "Descriptor.h"
 #include "ConstantBuffer.h"
 #include "Input.h"
+#include "PipelineState.h"
 #include "imgui/imgui.h"
 #include "../shader/ParticleData.hlsli"
 
@@ -58,57 +59,11 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		0,2,3
 	};
 
-	VertexBuffer vb(vertices);
-	IndexBuffer ib(indices);
-
-	Shader shader("shader/Basic.hlsl");
-
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-		{
-			"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-		},
-		{
-			"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-		},
-	};
-
 	RootSignature rootSignature;
-	rootSignature.Add(RangeType::CBV | RangeType::SRV);
 	rootSignature.Add(RangeType::CBV | RangeType::UAV);
 	rootSignature.Add(RangeType::SRV);
+	rootSignature.Add(RangeType::SRV);
 	rootSignature.Serialize(&texture.GetSamplerDescription(), 1);
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
-	pipelineDesc.pRootSignature = rootSignature.Get();
-	pipelineDesc.VS.pShaderBytecode = shader.GetVS()->GetBufferPointer();
-	pipelineDesc.VS.BytecodeLength = shader.GetVS()->GetBufferSize();
-	pipelineDesc.PS.pShaderBytecode = shader.GetPS()->GetBufferPointer();
-	pipelineDesc.PS.BytecodeLength = shader.GetPS()->GetBufferSize();
-	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	pipelineDesc.RasterizerState.MultisampleEnable = false;
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	pipelineDesc.RasterizerState.DepthClipEnable = true;
-	pipelineDesc.BlendState.AlphaToCoverageEnable = false;
-	pipelineDesc.BlendState.IndependentBlendEnable = false;
-
-	D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {};
-	renderTargetBlendDesc.BlendEnable = false;
-	renderTargetBlendDesc.LogicOpEnable = false;
-	renderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	pipelineDesc.BlendState.RenderTarget[0] = renderTargetBlendDesc;
-	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
-	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
-	pipelineDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
-	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineDesc.NumRenderTargets = 1;
-	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	pipelineDesc.SampleDesc.Count = 1;
-	pipelineDesc.SampleDesc.Quality = 0;
-
-	ID3D12PipelineState* pipelineState = nullptr;
-	device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 
 	Descriptor::Init(device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	Descriptor descriptor(rootSignature.GetNumDescriptors(), rootSignature.GetRootArgumentsOffsets());
@@ -117,13 +72,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	Descriptor::GPUHandle gpuHandle = descriptor.GetGPUHandle();
 
 	Shader::SetUpSharedResources(cpuHandle);
-
-	float4 cccc = float4(0.5, 0.0, 0.0, 0.0);
-
-	ConstantBuffer constantBuffer((void*)&cccc, sizeof(cccc));
-	device->CreateConstantBufferView(&constantBuffer.GetDesc(), cpuHandle.Get());
-
-	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Increment());
 
 	struct Particle
 	{
@@ -140,8 +88,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	ParticleInput particleInput = { {0,0}, 0 };
 	ConstantBuffer particleInputBuffer((void*)&particleInput, sizeof(ParticleInput));
 	particleInputBuffer.Map(nullptr);
-	cpuHandle.Increment();
-	device->CreateConstantBufferView(&particleInputBuffer.GetDesc(), cpuHandle.Get());
+	device->CreateConstantBufferView(&particleInputBuffer.GetView(), cpuHandle.Get());
 
 	int particleCount = (PARTICLE_COUNT / PARTICLE_NUMTHREADS) * PARTICLE_NUMTHREADS;
 
@@ -206,39 +153,18 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	device->CreateShaderResourceView(particleBuffer, &srvDesc, cpuHandle.Increment());
 
-	Shader particleShader("shader/Particle.hlsl", true);
+	Shader particleShader("shader/Particle.hlsl", Shader::BlendType::Addictive, true);
 
-	D3D12_RENDER_TARGET_BLEND_DESC particleBlendDesc = {}; //addictive blending
-	particleBlendDesc.BlendEnable = true;
-	particleBlendDesc.SrcBlend = D3D12_BLEND_ONE;
-	particleBlendDesc.DestBlend = D3D12_BLEND_ONE;
-	particleBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-	particleBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	particleBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	particleBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	particleBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	PipelineState particleState(rootSignature, particleShader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC particlePipelineDesc = {};
-	particlePipelineDesc.pRootSignature = rootSignature.Get();
-	particlePipelineDesc.VS.pShaderBytecode = particleShader.GetVS()->GetBufferPointer();
-	particlePipelineDesc.VS.BytecodeLength = particleShader.GetVS()->GetBufferSize();
-	particlePipelineDesc.PS.pShaderBytecode = particleShader.GetPS()->GetBufferPointer();
-	particlePipelineDesc.PS.BytecodeLength = particleShader.GetPS()->GetBufferSize();
-	particlePipelineDesc.GS.pShaderBytecode = particleShader.GetGS()->GetBufferPointer();
-	particlePipelineDesc.GS.BytecodeLength = particleShader.GetGS()->GetBufferSize();
-	particlePipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	particlePipelineDesc.RasterizerState = pipelineDesc.RasterizerState;
-	particlePipelineDesc.BlendState = pipelineDesc.BlendState;
-	particlePipelineDesc.BlendState.RenderTarget[0] = particleBlendDesc;
-	particlePipelineDesc.InputLayout = { nullptr, 0 };
-	particlePipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-	particlePipelineDesc.NumRenderTargets = 1;
-	particlePipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	particlePipelineDesc.SampleDesc.Count = 1;
-	particlePipelineDesc.SampleDesc.Quality = 0;
+	VertexBuffer vb(vertices);
+	vb.Map(nullptr);
+	IndexBuffer ib(indices);
 
-	ID3D12PipelineState* particlePipelineState = nullptr;
-	device->CreateGraphicsPipelineState(&particlePipelineDesc, IID_PPV_ARGS(&particlePipelineState));
+	Shader shader("shader/Basic.hlsl", Shader::BlendType::Off);
+	PipelineState state(rootSignature, shader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+
+	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Increment());
 
 	Time::Init();
 
@@ -251,26 +177,12 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetGraphicsRootSignature(rootSignature.Get());
 
 		Shader::UpdateSharedResources(cmdList);
-		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		cmdList->SetPipelineState(pipelineState);
-
-
-		cmdList->SetDescriptorHeaps(1, &descriptor.GetHeap());
+		cmdList->SetDescriptorHeaps(1, descriptor.GetHeapAddress());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-
+		int tableIndex = 1;
 		float2 mousePos = Input::GetMousePosition();
-		float size = 50;
-		vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
-		vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
-		vertices[2].position = float3(mousePos.x + size, mousePos.y - size, 0);
-		vertices[3].position = float3(mousePos.x - size, mousePos.y + size, 0);
-
-		cmdList->SetGraphicsRootDescriptorTable(1, gpuHandle.Get());
-		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
-		cmdList->IASetIndexBuffer(&ib.GetView());
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
 		{
 			particleInput.mousePos = mousePos;
@@ -301,7 +213,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
-		cmdList->SetComputeRootDescriptorTable(2, gpuHandle.Increment());
+		cmdList->SetComputeRootDescriptorTable(tableIndex, gpuHandle.Get());
 
 		auto preBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		cmdList->ResourceBarrier(1, &preBarrier);
@@ -309,10 +221,24 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 		auto postBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		cmdList->ResourceBarrier(1, &postBarrier);
-		cmdList->SetGraphicsRootDescriptorTable(3, gpuHandle.Increment());
-		cmdList->SetPipelineState(particlePipelineState);
+		cmdList->SetGraphicsRootDescriptorTable(++tableIndex, gpuHandle.Increment());
+		cmdList->SetPipelineState(particleState.Get());
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);
+
+		float size = 50;
+		vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
+		vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
+		vertices[2].position = float3(mousePos.x + size, mousePos.y + size, 0);
+		vertices[3].position = float3(mousePos.x - size, mousePos.y + size, 0);
+		vb.Update(vertices);
+
+		cmdList->SetPipelineState(state.Get());
+		cmdList->SetGraphicsRootDescriptorTable(++tableIndex, gpuHandle.Increment());
+		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
+		cmdList->IASetIndexBuffer(&ib.GetView());
+		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
 
 		GUI::Render(cmdList);
 
@@ -322,7 +248,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		Input::ClearStates();
 	}
 	Renderer::Destroy();
-	GraphicDevice::Destroy();
 	Window::Destroy();
 	return 0;
 }

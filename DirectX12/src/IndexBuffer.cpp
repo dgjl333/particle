@@ -3,24 +3,22 @@
 #include "GraphicDevice.h"
 
 IndexBuffer::IndexBuffer(const std::vector<unsigned int>& indices):
-	m_buffer(nullptr), m_view{}
+	Buffer(sizeof(unsigned int) * indices.size()), m_view{}
 {
-	UINT64 totalSize = indices.size() * sizeof(unsigned int);
-	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(totalSize);
+	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(m_size);
 	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_buffer));
 
-	unsigned int* indexMap = nullptr;
-	m_buffer->Map(0, nullptr, (void**)&indexMap);
-	std::copy(indices.begin(), indices.end(), indexMap);
+	m_buffer->Map(0, nullptr, &m_map);
+	memcpy(m_map, indices.data(), m_size);
 	m_buffer->Unmap(0, nullptr);
 
 	m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
 	m_view.Format = DXGI_FORMAT_R32_UINT;
-	m_view.SizeInBytes = totalSize;
+	m_view.SizeInBytes = m_size;
 }
 
-IndexBuffer::~IndexBuffer()
+void IndexBuffer::Update(const std::vector<unsigned int>& indices)
 {
-	m_buffer->Release();
+	Buffer::Update((void*)indices.data());
 }

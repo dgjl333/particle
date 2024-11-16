@@ -18,11 +18,6 @@ Descriptor::Descriptor(UINT numDescriptors, const std::vector<int>& rootArgument
 	m_gpuHandle = GPUHandle(m_heap->GetGPUDescriptorHandleForHeapStart(), rootArgumentsOffset);
 }
 
-Descriptor::~Descriptor()
-{
-	m_heap->Release();
-}
-
 Descriptor::CPUHandle::CPUHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle):
 	m_initHandle(handle), m_handle(handle) {}
 

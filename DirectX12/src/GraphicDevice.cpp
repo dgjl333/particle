@@ -2,8 +2,8 @@
 #include <vector>
 #include "Debug.h"
 
-ID3D12Device* GraphicDevice::s_device = nullptr;
-IDXGIFactory6* GraphicDevice::s_dxgiFactory = nullptr;
+ComPtr<ID3D12Device> GraphicDevice::s_device = nullptr;
+ComPtr<IDXGIFactory6> GraphicDevice::s_dxgiFactory = nullptr;
 
 void GraphicDevice::Init()
 {
@@ -19,7 +19,7 @@ void GraphicDevice::Init()
 
 	std::vector<IDXGIAdapter*> allAdapters;
 	IDXGIAdapter* adapter = nullptr;
-	for (size_t i = 0; s_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
+	for (int i = 0; s_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
 	{
 		allAdapters.push_back(adapter);
 	}
@@ -43,12 +43,6 @@ void GraphicDevice::Init()
 			break;
 		}
 	}
-}
-
-void GraphicDevice::Destroy()
-{
-	if(s_device) s_device->Release();
-	if(s_dxgiFactory) s_dxgiFactory->Release();
 }
 
 D3D_FEATURE_LEVEL GraphicDevice::s_levels[5] = {

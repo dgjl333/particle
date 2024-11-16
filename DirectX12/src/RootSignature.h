@@ -2,6 +2,9 @@
 #include <vector>
 #include <d3d12.h>
 #include <string>
+#include <wrl/client.h>
+
+using Microsoft::WRL::ComPtr;
 
 enum class RangeType
 {
@@ -17,8 +20,21 @@ inline RangeType operator|(RangeType a, RangeType b)
 
 class RootSignature
 {
+public:
+	RootSignature();
+
+	void Serialize(const D3D12_STATIC_SAMPLER_DESC* pStaticSamplers, UINT numStaticSamplers);
+
+	void Add(RangeType type);
+
+	inline ID3D12RootSignature* Get() const { return m_signature.Get(); }
+
+	inline const std::vector<int>& GetRootArgumentsOffsets() const { return m_rootArgumentsOffsets; }
+
+	inline UINT GetNumDescriptors() const { return m_numDescriptors; }
+
 private:
-	ID3D12RootSignature* m_signature;
+	ComPtr<ID3D12RootSignature> m_signature;
 	std::vector<D3D12_ROOT_PARAMETER> m_parameters;
 	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> m_ranges;
 
@@ -31,7 +47,7 @@ private:
 	int m_srvRegister = 1;
 	int m_uavRegister = 1;
 
-	inline D3D12_ROOT_PARAMETER GetParameter(D3D12_DESCRIPTOR_RANGE* descriptorRanges, UINT numDescriptorRanges)
+	inline D3D12_ROOT_PARAMETER GetParameter(D3D12_DESCRIPTOR_RANGE* descriptorRanges, UINT numDescriptorRanges) const
 	{
 		D3D12_ROOT_PARAMETER parameter = {};
 		parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -63,18 +79,4 @@ private:
 	std::string DebugGetShaderRegister(const std::string& typeName, UINT shaderRegister);
 
 	void DebugPrintLayout();
-
-public:
-	RootSignature();
-	~RootSignature();
-
-	void Serialize(const D3D12_STATIC_SAMPLER_DESC* pStaticSamplers, UINT numStaticSamplers);
-
-	void Add(RangeType type);
-
-	inline ID3D12RootSignature* Get() { return m_signature; }
-
-	inline UINT GetNumDescriptors() { return m_numDescriptors; }
-
-	inline const std::vector<int>& GetRootArgumentsOffsets() { return m_rootArgumentsOffsets; }
 };

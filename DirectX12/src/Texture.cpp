@@ -44,7 +44,7 @@ Texture::Texture(const std::string& filePath) :
 
 	Upload(img, uploadBuffer);
 
-	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::CreateResourceBarrier(m_buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::CreateResourceBarrier(m_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	Renderer::ExecuteCommands(&texBarrierDesc);
 	Renderer::WaitForFrame();
@@ -99,15 +99,11 @@ void Texture::Upload(const DirectX::Image* img, ID3D12Resource* uploadBuffer)
 	texCopyLocation.PlacedFootprint.Footprint.Format = img->format;
 
 	D3D12_TEXTURE_COPY_LOCATION texDestLocation = {};
-	texDestLocation.pResource = m_buffer;
+	texDestLocation.pResource = m_buffer.Get();
 	texDestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 	texDestLocation.SubresourceIndex = 0;
 
 	Renderer::GetCommandList()->CopyTextureRegion(&texDestLocation, 0, 0, 0, &texCopyLocation, nullptr);
 }
 
-Texture::~Texture()
-{
-	m_buffer->Release();
-}
 

@@ -1,17 +1,16 @@
 #pragma once
-#include <d3d12.h>
-#include <vector>
+#include "Buffer.h"
 #include "Vertex.h"
+#include <vector>
 
-
-class VertexBuffer
+class VertexBuffer : public Buffer
 {
-private:
-	ID3D12Resource* m_buffer;
-	D3D12_VERTEX_BUFFER_VIEW m_view;
 public:
 	VertexBuffer(const std::vector<Vertex>& vertices);
-	~VertexBuffer();
+	void Update(const std::vector<Vertex>& vertices);
 
-	const D3D12_VERTEX_BUFFER_VIEW& GetView() { return m_view; }
+	const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return m_view; }
+
+private:
+	D3D12_VERTEX_BUFFER_VIEW m_view;
 };

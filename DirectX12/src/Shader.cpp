@@ -13,8 +13,8 @@
 	UINT Shader::s_compileFlag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
-Shader::Shader(const std::string& filePath, bool hasGeometryShader):
-	m_vsBlob(nullptr), m_psBlob(nullptr), m_gsBlob(nullptr)
+Shader::Shader(const std::string& filePath, BlendType type, bool hasGeometryShader):
+	m_vsBlob(nullptr), m_psBlob(nullptr), m_gsBlob(nullptr), m_blendType(type)
 {
 	ID3DBlob* errorBlob;
 
@@ -52,12 +52,6 @@ void Shader::ErrorCheck(const std::string& errorShader, const HRESULT& compileRe
 	}
 }
 
-Shader::~Shader()
-{
-	m_psBlob->Release();
-	m_vsBlob->Release();
-}
-
 Shader::SharedInput Shader::s_sharedInput = {};
 std::unique_ptr<ConstantBuffer> Shader::s_constantBuffer = nullptr;
 
@@ -78,7 +72,7 @@ void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 
 	s_constantBuffer = std::make_unique<ConstantBuffer>((void*)&s_sharedInput, sizeof(SharedInput));
 	s_constantBuffer.get()->Map(&range);
-	GraphicDevice::GetDevice()->CreateConstantBufferView(&s_constantBuffer.get()->GetDesc(), cpuHandle.Get());
+	GraphicDevice::GetDevice()->CreateConstantBufferView(&s_constantBuffer.get()->GetView(), cpuHandle.Get());
 	cpuHandle.Increment();
 }
 

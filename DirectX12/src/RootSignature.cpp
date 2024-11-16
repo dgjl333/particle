@@ -82,11 +82,6 @@ void RootSignature::Serialize(const D3D12_STATIC_SAMPLER_DESC* pStaticSamplers, 
 	m_ranges.~vector();
 }
 
-RootSignature::~RootSignature()
-{
-	m_signature->Release();
-}
-
 void RootSignature::DebugPrintLayout()
 {
 #ifdef _DEBUG

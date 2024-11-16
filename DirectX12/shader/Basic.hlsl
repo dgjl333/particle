@@ -1,13 +1,6 @@
 #include "CommonStructure.hlsli"
 #include "CommonInput.hlsli"
 
-struct Matrix
-{
-    float4 color;
-};
-ConstantBuffer<Matrix> m:register(b1);
-
-
 v2f vert(vertData i)
 {
     v2f o;
@@ -17,12 +10,11 @@ v2f vert(vertData i)
 }
 
 
-Texture2D<float4> tex : register(t1);
+Texture2D<float4> tex : register(t2);
 SamplerState smp : register(s0);
 
 
 float4 frag(v2f i) : SV_TARGET
 {   
-    //return float4(i.uv, 0, 1);
-    return tex.Sample(smp, i.uv) + m.color;
+    return tex.Sample(smp, i.uv);
 }

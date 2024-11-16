@@ -28,7 +28,7 @@ struct Particle
     float2 velocity;
 };
 
-StructuredBuffer<Particle> particles : register(t2);
+StructuredBuffer<Particle> particles : register(t1);
 
 float Rand(float2 p)
 {

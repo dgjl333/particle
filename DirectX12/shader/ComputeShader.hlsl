@@ -10,7 +10,7 @@ struct Particle
 
 RWStructuredBuffer<Particle> particles : register(u1);
 
-cbuffer Data : register(b2)
+cbuffer Data : register(b1)
 {
     float2 _MousePos;
     float _ForceStrength;

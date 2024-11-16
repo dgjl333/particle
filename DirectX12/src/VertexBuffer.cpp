@@ -3,24 +3,22 @@
 #include "GraphicDevice.h"
 
 VertexBuffer::VertexBuffer(const std::vector<Vertex>& vertices) :
-	m_buffer(nullptr), m_view{}
+	Buffer(sizeof(Vertex) * vertices.size()), m_view({})
 {
-	UINT64 totalSize = vertices.size() * sizeof(Vertex);
-	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(totalSize);
+	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(m_size);
 	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_buffer));
 	
-	Vertex* vertMap = nullptr;
-	m_buffer->Map(0, nullptr, (void**)&vertMap);
-	std::copy(vertices.begin(), vertices.end(), vertMap);
+	m_buffer->Map(0, nullptr, &m_map);
+	memcpy(m_map, vertices.data(), m_size);
 	m_buffer->Unmap(0, nullptr);
 
 	m_view.BufferLocation = m_buffer->GetGPUVirtualAddress();
-	m_view.SizeInBytes = totalSize;
+	m_view.SizeInBytes = m_size;
 	m_view.StrideInBytes = sizeof(Vertex);
 }
 
-VertexBuffer::~VertexBuffer()
+void VertexBuffer::Update(const std::vector<Vertex>& vertices)
 {
-	m_buffer->Release();
+	Buffer::Update((void*)vertices.data());
 }

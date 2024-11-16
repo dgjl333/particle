@@ -1,6 +1,9 @@
 #pragma once
 #include <d3d12.h>
 #include <vector>
+#include <wrl/client.h> 
+
+using Microsoft::WRL::ComPtr;
 
 class Descriptor
 {
@@ -16,7 +19,7 @@ public:
 
 		void Reset();
 		D3D12_CPU_DESCRIPTOR_HANDLE Increment();
-		inline D3D12_CPU_DESCRIPTOR_HANDLE Get() { return m_handle; }
+		inline D3D12_CPU_DESCRIPTOR_HANDLE Get() const { return m_handle; }
 	};
 
 	class GPUHandle
@@ -34,25 +37,23 @@ public:
 
 		D3D12_GPU_DESCRIPTOR_HANDLE ResetToGraphicsRootDescriptorTableStart();
 		D3D12_GPU_DESCRIPTOR_HANDLE Increment();
-		inline D3D12_GPU_DESCRIPTOR_HANDLE Get() { return m_handle; }
+		inline D3D12_GPU_DESCRIPTOR_HANDLE Get() const { return m_handle; }
 	};
 
+	Descriptor(UINT numDescriptors, const std::vector<int>& rootArgumentsOffset);
+
+	ID3D12DescriptorHeap* GetHeap() const { return m_heap.Get(); }
+	ID3D12DescriptorHeap** GetHeapAddress() { return m_heap.GetAddressOf(); }
+
+	CPUHandle GetCPUHandle() const { return m_cpuHandle; }
+	GPUHandle GetGPUHandle() const { return m_gpuHandle; }
+
+	static void Init(UINT size) { s_handleIncrementSize = size; }
 
 private:
-	ID3D12DescriptorHeap* m_heap;
+	ComPtr<ID3D12DescriptorHeap> m_heap;
 	CPUHandle m_cpuHandle;
 	GPUHandle m_gpuHandle;
 
 	static UINT s_handleIncrementSize;
-
-public:
-	Descriptor(UINT numDescriptors, const std::vector<int>& rootArgumentsOffset);
-	~Descriptor();
-
-	ID3D12DescriptorHeap*& GetHeap() { return m_heap; }
-
-	CPUHandle GetCPUHandle() { return m_cpuHandle; }
-	GPUHandle GetGPUHandle() { return m_gpuHandle; }
-
-	static void Init(UINT size) { s_handleIncrementSize = size; }
 };

@@ -6,12 +6,12 @@ void Buffer::Map(D3D12_RANGE* updateRange)
 	{
 		m_updateRange = std::make_unique<D3D12_RANGE>(*updateRange);
 	}
-	m_resource->Map(0, m_updateRange.get(), &m_map);
+	m_buffer->Map(0, m_updateRange.get(), &m_map);
 }
 
 void Buffer::Unmap()
 {
-	m_resource->Unmap(0, m_updateRange.get());
+	m_buffer->Unmap(0, m_updateRange.get());
 }
 
 void Buffer::Update(void* buffer)
