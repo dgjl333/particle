@@ -66,6 +66,12 @@ D3D12_RENDER_TARGET_BLEND_DESC PipelineState::GetBlendDesc(Shader::BlendType typ
 		break;
 	case Shader::BlendType::Alpha:
 		desc.BlendEnable = true;
+		desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		desc.BlendOp = D3D12_BLEND_OP_ADD;
+		desc.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
+		desc.DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+		desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
 		break;
 	case Shader::BlendType::Addictive:
 		desc.BlendEnable = true;

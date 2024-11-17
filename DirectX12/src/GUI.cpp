@@ -11,6 +11,9 @@ ComPtr<ID3D12DescriptorHeap> GUI::s_descriptorHeap = nullptr;
 std::vector<std::string> GUI::s_debugMessages;
 std::vector<int> GUI::s_debugMessagesCount;
 
+bool GUI::s_cursorShown = true;
+bool GUI::s_cursorInsideClient = true;
+
 void GUI::Init()
 {
 	IMGUI_CHECKVERSION();
@@ -34,6 +37,32 @@ void GUI::Init()
 
 void GUI::Update()
 {
+	bool wantCapture = ImGui::GetIO().WantCaptureMouse;
+
+	if (s_cursorShown != wantCapture)
+	{
+		ShowCursor(!s_cursorShown);
+		s_cursorShown = wantCapture;
+	}
+
+	POINT cursorPos;
+	GetCursorPos(&cursorPos);   
+	ScreenToClient(Window::GetHWND(), &cursorPos); 
+
+	RECT clientRect;
+	GetClientRect(Window::GetHWND(), &clientRect);  
+
+	if (cursorPos.x >= clientRect.left && cursorPos.x <= clientRect.right &&
+		cursorPos.y >= clientRect.top && cursorPos.y <= clientRect.bottom)
+	{
+		s_cursorInsideClient = true;
+	}
+	else
+	{
+		s_cursorInsideClient = false;
+
+	}
+
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();

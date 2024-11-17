@@ -155,13 +155,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	Shader particleShader("shader/Particle.hlsl", Shader::BlendType::Addictive, true);
 
-	PipelineState particleState(rootSignature, particleShader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
+	PipelineState particleState(rootSignature, particleShader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT, nullptr);
 
 	VertexBuffer vb(vertices);
 	vb.Map(nullptr);
 	IndexBuffer ib(indices);
 
-	Shader shader("shader/Basic.hlsl", Shader::BlendType::Off);
+	Shader shader("shader/Mouse.hlsl", Shader::BlendType::Alpha);
 	PipelineState state(rootSignature, shader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
 	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Increment());
@@ -226,19 +226,22 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);
 
-		float size = 50;
-		vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
-		vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
-		vertices[2].position = float3(mousePos.x + size, mousePos.y + size, 0);
-		vertices[3].position = float3(mousePos.x - size, mousePos.y + size, 0);
-		vb.Update(vertices);
+		if (!GUI::IsCursorShown() && GUI::IsCursorInsideClient())
+		{
+			const int size = 50;
+			vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
+			vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
+			vertices[2].position = float3(mousePos.x + size, mousePos.y + size, 0);
+			vertices[3].position = float3(mousePos.x - size, mousePos.y + size, 0);
+			vb.Update(vertices);
 
-		cmdList->SetPipelineState(state.Get());
-		cmdList->SetGraphicsRootDescriptorTable(++tableIndex, gpuHandle.Increment());
-		cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
-		cmdList->IASetIndexBuffer(&ib.GetView());
-		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+			cmdList->SetPipelineState(state.Get());
+			cmdList->SetGraphicsRootDescriptorTable(++tableIndex, gpuHandle.Increment());
+			cmdList->IASetVertexBuffers(0, 1, &vb.GetView());
+			cmdList->IASetIndexBuffer(&ib.GetView());
+			cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			cmdList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		}
 
 		GUI::Render(cmdList);
 

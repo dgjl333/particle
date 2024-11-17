@@ -43,7 +43,6 @@ float2 ComputeScreenPos(float4 pos)
     return xy / pos.w;
 }
 
-
 v2g vert(vIn i)
 {
     v2g o;

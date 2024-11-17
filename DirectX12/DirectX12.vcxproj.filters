@@ -181,7 +181,6 @@
     <Font Include="assets\font\ARIAL.TTF" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\CommonStructure.hlsli" />
     <None Include="include\DirectXTex\DirectXTex.inl">
       <Filter>ヘッダー ファイル</Filter>
     </None>
@@ -194,7 +193,7 @@
     <Library Include="lib\Debug\DirectXTex.lib" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shader\Basic.hlsl" />
+    <FxCompile Include="shader\Mouse.hlsl" />
     <FxCompile Include="shader\ComputeShader.hlsl" />
     <FxCompile Include="shader\Particle.hlsl" />
   </ItemGroup>

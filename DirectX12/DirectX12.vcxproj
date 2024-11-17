@@ -218,7 +218,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="include\DirectXTex\DirectXTex.inl" />
-    <None Include="shader\CommonStructure.hlsli" />
     <None Include="shader\CommonInput.hlsli" />
     <None Include="shader\Noise.hlsli" />
     <None Include="shader\ParticleData.hlsli" />
@@ -228,7 +227,7 @@
     <Library Include="lib\Release\DirectXTex.lib" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shader\Basic.hlsl" />
+    <FxCompile Include="shader\Mouse.hlsl" />
     <FxCompile Include="shader\ComputeShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CSMain</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
