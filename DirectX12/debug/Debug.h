@@ -25,7 +25,6 @@ void print(const T& text, const Args&... args)
 
 inline void EnableDebug()
 {
-#ifdef _DEBUG
 	ComPtr<ID3D12Debug> spDebugController0 = nullptr;
 	ComPtr<ID3D12Debug1> spDebugController1 = nullptr;
 	D3D12GetDebugInterface(IID_PPV_ARGS(&spDebugController0));
@@ -35,5 +34,4 @@ inline void EnableDebug()
 	ComPtr<ID3D12Debug> debug = nullptr;
 	D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
 	debug->EnableDebugLayer();
-#endif
 }

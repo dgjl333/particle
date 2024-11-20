@@ -108,7 +108,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)debug;$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d12.lib;dxgi.lib;d3dcompiler.lib;DirectXTex.lib</AdditionalDependencies>

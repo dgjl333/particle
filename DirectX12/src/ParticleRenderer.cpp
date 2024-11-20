@@ -25,13 +25,18 @@
 
 using namespace DirectX;
 
-#ifdef _DEBUG
-int main()
-#else
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
-#endif 
 {
+#ifdef _DEBUG
 	EnableDebug();
+	AllocConsole();
+	SetConsoleTitleW(L"Debug Console");
+
+	FILE* file;
+	freopen_s(&file, "CONIN$", "r", stdin);
+	freopen_s(&file, "CONOUT$", "w", stderr);
+	freopen_s(&file, "CONOUT$", "w", stdout);
+#endif
 
 	Random::Init();
 	GraphicDevice::Init();
@@ -44,8 +49,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	Renderer::Init();
 	ID3D12GraphicsCommandList* cmdList = Renderer::GetCommandList();
-
-	Texture texture("assets/texture/1.png");
 
 	std::vector<Vertex> vertices = {
 		{{0.0f, 500.0f, 0.0f}, {0, 0}},
@@ -62,8 +65,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	RootSignature rootSignature;
 	rootSignature.Add(RangeType::CBV | RangeType::UAV);
 	rootSignature.Add(RangeType::SRV);
-	rootSignature.Add(RangeType::SRV);
-	rootSignature.Serialize(&texture.GetSamplerDescription(), 1);
+	rootSignature.Add(RangeType::CBV);
+	rootSignature.Serialize(nullptr, 0);
 
 	Descriptor::Init(device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	Descriptor descriptor(rootSignature.GetNumDescriptors(), rootSignature.GetRootArgumentsOffsets());
@@ -99,8 +102,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		particles[i].position = { Random::Range(0.0f, (float)Window::GetWidth()), Random::Range(0.0f, (float)Window::GetHeight()) };
 	}
 
-	D3D12_RESOURCE_DESC particleDesc = Utils::CreateResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	D3D12_RESOURCE_DESC particleUploadDesc = Utils::CreateResourceDesc(particleCount * sizeof(Particle));
+	D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	D3D12_RESOURCE_DESC particleUploadDesc = Utils::ResourceDesc(particleCount * sizeof(Particle));
 
 	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_HEAP_PROPERTIES defaultProp = Utils::HeapProperties(D3D12_HEAP_TYPE_DEFAULT);
@@ -117,7 +120,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	cmdList->CopyResource(particleBuffer, particleUploadBuffer);
 
-	auto particleBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	auto particleBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	Renderer::ExecuteCommands(&particleBarrier);
 	Renderer::WaitForFrame();
 
@@ -164,7 +167,15 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	Shader shader("shader/Mouse.hlsl", Shader::BlendType::Alpha);
 	PipelineState state(rootSignature, shader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
-	device->CreateShaderResourceView(texture.GetBuffer(), &texture.GetShaderResourceViewDescription(), cpuHandle.Increment());
+	struct MouseEffect
+	{
+		float flash;
+	};
+	MouseEffect effect = { 0 };
+
+	ConstantBuffer mouseEffectBuffer((void*)&effect, sizeof(MouseEffect));
+	mouseEffectBuffer.Map(nullptr);
+	device->CreateConstantBufferView(&mouseEffectBuffer.GetView(), cpuHandle.Increment());
 
 	Time::Init();
 
@@ -186,7 +197,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
 		{
 			particleInput.mousePos = mousePos;
+			effect.flash = 1;
 		}
+		else
+		{
+			effect.flash = 0;
+		}
+		mouseEffectBuffer.Update((void*)&effect);
 
 		static MouseButton activeButton;
 		if (Input::GetMouseButtonDown(MouseButton::LEFT))
@@ -215,11 +232,11 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
 		cmdList->SetComputeRootDescriptorTable(tableIndex, gpuHandle.Get());
 
-		auto preBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		auto preBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		cmdList->ResourceBarrier(1, &preBarrier);
 		cmdList->Dispatch(particleCount / PARTICLE_NUMTHREADS, 1, 1);
 
-		auto postBarrier = Utils::CreateResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+		auto postBarrier = Utils::ResourceBarrier(particleBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		cmdList->ResourceBarrier(1, &postBarrier);
 		cmdList->SetGraphicsRootDescriptorTable(++tableIndex, gpuHandle.Increment());
 		cmdList->SetPipelineState(particleState.Get());

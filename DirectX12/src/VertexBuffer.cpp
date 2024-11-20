@@ -5,7 +5,7 @@
 VertexBuffer::VertexBuffer(const std::vector<Vertex>& vertices) :
 	Buffer(sizeof(Vertex) * vertices.size()), m_view({})
 {
-	D3D12_RESOURCE_DESC resourceDesc = Utils::CreateResourceDesc(m_size);
+	D3D12_RESOURCE_DESC resourceDesc = Utils::ResourceDesc(m_size);
 	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_buffer));
 	

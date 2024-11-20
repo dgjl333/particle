@@ -22,7 +22,7 @@ namespace Utils
 		return prop;
 	}
 
-	 inline D3D12_RESOURCE_DESC CreateResourceDesc(UINT64 width, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
+	 inline D3D12_RESOURCE_DESC ResourceDesc(UINT64 width, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
 	{
 		D3D12_RESOURCE_DESC desc = {};
 		desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -38,7 +38,7 @@ namespace Utils
 		return desc;
 	}
 
-	 inline D3D12_RESOURCE_BARRIER CreateResourceBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+	 inline D3D12_RESOURCE_BARRIER ResourceBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 	 {
 		 D3D12_RESOURCE_BARRIER barrier = {};
 		 barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -50,7 +50,7 @@ namespace Utils
 		 return barrier;
 	 }
 
-	inline std::wstring GetWStringFromString(const std::string& str)
+	inline std::wstring WStringFromString(const std::string& str)
 	{
 		int num = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
 		std::wstring wstr;

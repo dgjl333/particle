@@ -20,7 +20,7 @@ Texture::Texture(const std::string& filePath) :
 	Init();
 	DirectX::ScratchImage scratchImg = {};
 
-	LoadFromWICFile(Utils::GetWStringFromString(filePath).c_str(), DirectX::WIC_FLAGS_NONE, &m_metaData, scratchImg);
+	LoadFromWICFile(Utils::WStringFromString(filePath).c_str(), DirectX::WIC_FLAGS_NONE, &m_metaData, scratchImg);
 	const DirectX::Image* img = scratchImg.GetImage(0, 0, 0);
 
 	m_samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -44,7 +44,7 @@ Texture::Texture(const std::string& filePath) :
 
 	Upload(img, uploadBuffer);
 
-	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::CreateResourceBarrier(m_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	D3D12_RESOURCE_BARRIER texBarrierDesc = Utils::ResourceBarrier(m_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	Renderer::ExecuteCommands(&texBarrierDesc);
 	Renderer::WaitForFrame();
@@ -54,7 +54,7 @@ Texture::Texture(const std::string& filePath) :
 void Texture::CreateResource(const DirectX::Image* img, ID3D12Resource** uploadBuffer)
 {
 	UINT64 width = Utils::AlignSize256(img->rowPitch) * img->height;
-	D3D12_RESOURCE_DESC uploadResourceDesc = Utils::CreateResourceDesc(width);
+	D3D12_RESOURCE_DESC uploadResourceDesc = Utils::ResourceDesc(width);
 	D3D12_HEAP_PROPERTIES uploadProp = Utils::HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	GraphicDevice::GetDevice()->CreateCommittedResource(&uploadProp, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
 

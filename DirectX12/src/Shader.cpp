@@ -18,15 +18,15 @@ Shader::Shader(const std::string& filePath, BlendType type, bool hasGeometryShad
 {
 	ID3DBlob* errorBlob;
 
-	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_1", s_compileFlag, 0, &m_vsBlob, &errorBlob);
+	HRESULT result = D3DCompileFromFile(Utils::WStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vert", "vs_5_1", s_compileFlag, 0, &m_vsBlob, &errorBlob);
 	ErrorCheck("Vertex Shader", result, errorBlob);
 
-	result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_1", s_compileFlag, 0, &m_psBlob, &errorBlob);
+	result = D3DCompileFromFile(Utils::WStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "frag", "ps_5_1", s_compileFlag, 0, &m_psBlob, &errorBlob);
 	ErrorCheck("Pixel Shader", result, errorBlob);
 
 	if (hasGeometryShader)
 	{
-		result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "geom", "gs_5_1", s_compileFlag, 0, &m_gsBlob, &errorBlob);
+		result = D3DCompileFromFile(Utils::WStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "geom", "gs_5_1", s_compileFlag, 0, &m_gsBlob, &errorBlob);
 		ErrorCheck("Geometry Shader", result, errorBlob);
 	}
 }
@@ -91,7 +91,7 @@ ID3DBlob* Shader::CompileComputeShader(const std::string& filePath)
 	ID3DBlob* errorBlob;
 	ID3DBlob* shaderBlob;
 
-	HRESULT result = D3DCompileFromFile(Utils::GetWStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "CSMain", "cs_5_1", s_compileFlag, 0, &shaderBlob, &errorBlob);
+	HRESULT result = D3DCompileFromFile(Utils::WStringFromString(filePath).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "CSMain", "cs_5_1", s_compileFlag, 0, &shaderBlob, &errorBlob);
 	ErrorCheck("Compute Shader", result, errorBlob);
 	return shaderBlob;
 }
