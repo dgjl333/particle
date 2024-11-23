@@ -14,6 +14,8 @@ std::vector<int> GUI::s_debugMessagesCount;
 bool GUI::s_cursorShown = true;
 bool GUI::s_cursorInsideClient = true;
 
+#define FRAMES_IN_FLIGHT 3
+
 void GUI::Init()
 {
 	IMGUI_CHECKVERSION();
@@ -32,7 +34,7 @@ void GUI::Init()
 
 	ID3D12Device* device = GraphicDevice::GetDevice();
 	device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&s_descriptorHeap));
-	ImGui_ImplDX12_Init(device, NUM_BACK_BUFFERS, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, s_descriptorHeap.Get(), s_descriptorHeap->GetCPUDescriptorHandleForHeapStart(), s_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	ImGui_ImplDX12_Init(device, FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, s_descriptorHeap.Get(), s_descriptorHeap->GetCPUDescriptorHandleForHeapStart(), s_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void GUI::Update()

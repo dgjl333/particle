@@ -165,7 +165,6 @@
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Buffer.cpp" />
-    <ClCompile Include="src\ConstantBuffer.cpp" />
     <ClCompile Include="src\Descriptor.cpp" />
     <ClCompile Include="src\GraphicDevice.cpp" />
     <ClCompile Include="src\GUI.cpp" />

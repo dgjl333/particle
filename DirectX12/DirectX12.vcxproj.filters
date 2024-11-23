@@ -75,9 +75,6 @@
     <ClCompile Include="src\Descriptor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\ConstantBuffer.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="src\Input.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

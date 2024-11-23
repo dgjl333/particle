@@ -94,6 +94,9 @@ void Renderer::Init()
 
 void Renderer::Update()
 {
+	s_cmdAllocator->Reset();
+	s_cmdList->Reset(s_cmdAllocator.Get(), nullptr);
+
 	unsigned int backBuferIndex = s_swapChain->GetCurrentBackBufferIndex();
 	s_barrierRtv.Transition.pResource = s_backBufferResources[backBuferIndex].Get();
 	s_barrierPresent.Transition.pResource = s_backBufferResources[backBuferIndex].Get();
@@ -130,8 +133,6 @@ void Renderer::WaitForFrame()
 		s_fence->SetEventOnCompletion(s_fenceValue, s_fenceHandle);
 		WaitForSingleObject(s_fenceHandle, INFINITE);
 	}
-	s_cmdAllocator->Reset();
-	s_cmdList->Reset(s_cmdAllocator.Get(), nullptr);
 }
 
 void Renderer::Render()

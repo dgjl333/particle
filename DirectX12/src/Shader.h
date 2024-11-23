@@ -52,6 +52,6 @@ private:
 		float seed;
 	};
 
-	static std::unique_ptr<ConstantBuffer> s_constantBuffer;
+	static std::unique_ptr<ConstantBuffer<SharedInput>> s_constantBuffer;
 	static SharedInput s_sharedInput;
 };

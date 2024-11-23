@@ -53,7 +53,7 @@ void Shader::ErrorCheck(const std::string& errorShader, const HRESULT& compileRe
 }
 
 Shader::SharedInput Shader::s_sharedInput = {};
-std::unique_ptr<ConstantBuffer> Shader::s_constantBuffer = nullptr;
+std::unique_ptr<ConstantBuffer<Shader::SharedInput>> Shader::s_constantBuffer = nullptr;
 
 void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 {
@@ -70,7 +70,7 @@ void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 	range.Begin = 0;
 	range.End = offsetof(SharedInput, projectionMatrix);
 
-	s_constantBuffer = std::make_unique<ConstantBuffer>((void*)&s_sharedInput, sizeof(SharedInput));
+	s_constantBuffer = std::make_unique<ConstantBuffer<Shader::SharedInput>>(&s_sharedInput);
 	s_constantBuffer.get()->Map(&range);
 	GraphicDevice::GetDevice()->CreateConstantBufferView(&s_constantBuffer.get()->GetView(), cpuHandle.Get());
 	cpuHandle.Increment();
@@ -83,7 +83,7 @@ void Shader::UpdateSharedResources(ID3D12GraphicsCommandList* cmdList)
 	float time = Time::GetTime();
 	s_sharedInput.time = float4(time / 20, time, time * 2, time * 3);
 	s_sharedInput.deltaTime = Time::GetDeltaTime();
-	s_constantBuffer.get()->Update((void*)&s_sharedInput);
+	s_constantBuffer.get()->Update(&s_sharedInput);
 }
 
 ID3DBlob* Shader::CompileComputeShader(const std::string& filePath)

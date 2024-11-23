@@ -89,7 +89,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	};
 
 	ParticleInput particleInput = { {0,0}, 0 };
-	ConstantBuffer particleInputBuffer((void*)&particleInput, sizeof(ParticleInput));
+	ConstantBuffer particleInputBuffer(&particleInput);
 	particleInputBuffer.Map(nullptr);
 	device->CreateConstantBufferView(&particleInputBuffer.GetView(), cpuHandle.Get());
 
@@ -171,9 +171,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	{
 		float flash;
 	};
-	MouseEffect effect = { 0 };
+	MouseEffect effect = {};
 
-	ConstantBuffer mouseEffectBuffer((void*)&effect, sizeof(MouseEffect));
+	ConstantBuffer mouseEffectBuffer(&effect);
 	mouseEffectBuffer.Map(nullptr);
 	device->CreateConstantBufferView(&mouseEffectBuffer.GetView(), cpuHandle.Increment());
 
@@ -192,6 +192,11 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetDescriptorHeaps(1, descriptor.GetHeapAddress());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
+		ImGui::Begin("Menu");
+
+
+		ImGui::End();
+
 		int tableIndex = 1;
 		float2 mousePos = Input::GetMousePosition();
 		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
@@ -203,7 +208,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		{
 			effect.flash = 0;
 		}
-		mouseEffectBuffer.Update((void*)&effect);
+		mouseEffectBuffer.Update(&effect);
 
 		static MouseButton activeButton;
 		if (Input::GetMouseButtonDown(MouseButton::LEFT))

@@ -16,7 +16,6 @@ public:
 
 	void Map(D3D12_RANGE* updateRange);
 	void Unmap();
-	virtual void Update(void* buffer);
 
 	inline ID3D12Resource* GetResource() const { return m_buffer.Get(); }
 
@@ -25,4 +24,6 @@ protected:
 	UINT64 m_size;
 	ComPtr<ID3D12Resource> m_buffer;
 	std::unique_ptr<D3D12_RANGE> m_updateRange;
+
+    void Update(void* buffer);
 };
