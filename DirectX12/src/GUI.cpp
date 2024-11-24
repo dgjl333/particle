@@ -115,30 +115,5 @@ void GUI::Destroy()
 	ImGui::DestroyContext();
 }
 
-void GUI::Debug(const std::string& message)
-{
-#ifdef _DEBUG
-	if (s_debugMessages.empty() || message != s_debugMessages.back())
-	{
-		s_debugMessages.push_back(message);
-		s_debugMessagesCount.push_back(1);
-	}
-	else
-	{
-		s_debugMessagesCount.back()++;
-	}
-#endif
-}
-
-void GUI::Debug(const char* message)
-{
-	GUI::Debug(std::string(message));
-}
-
-void GUI::Debug(bool value)
-{
-	std::string str = value ? "True" : "False";
-	GUI::Debug(str);
-}
 
 

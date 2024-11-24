@@ -84,11 +84,15 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	struct ParticleInput
 	{
+		float constantForceStrength;
+		float viscosity;
+		float curlScale;
+		float curlStrength;
+
 		float2 mousePos;
-		float strength;
 	};
 
-	ParticleInput particleInput = { {0,0}, 0 };
+	ParticleInput particleInput = {};
 	ConstantBuffer particleInputBuffer(&particleInput);
 	particleInputBuffer.Map(nullptr);
 	device->CreateConstantBufferView(&particleInputBuffer.GetView(), cpuHandle.Get());
@@ -192,10 +196,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetDescriptorHeaps(1, descriptor.GetHeapAddress());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		ImGui::Begin("Menu");
-
-
+		ImGui::SetNextWindowPos({(float)Window::GetWidth(),0}, ImGuiCond_Once, {1,0});
+		ImGui::SetNextWindowSize({ (float)Window::GetWidth() * 0.1f, (float)Window::GetHeight() }, ImGuiCond_FirstUseEver);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoMove);
+		
 		ImGui::End();
+		ImGui::PopStyleVar();
 
 		int tableIndex = 1;
 		float2 mousePos = Input::GetMousePosition();
@@ -214,20 +221,20 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		if (Input::GetMouseButtonDown(MouseButton::LEFT))
 		{
 			activeButton = MouseButton::LEFT;
-			particleInput.strength = 1;
+			particleInput.constantForceStrength = 1;
 		}
 		if (activeButton == MouseButton::LEFT && Input::GetMouseButtonUp(MouseButton::LEFT))
 		{
-			particleInput.strength = 0;
+			particleInput.constantForceStrength = 0;
 		}
 		if (Input::GetMouseButtonDown(MouseButton::RIGHT))
 		{
 			activeButton = MouseButton::RIGHT;
-			particleInput.strength = -2;
+			particleInput.constantForceStrength = -2;
 		}
 		if (activeButton == MouseButton::RIGHT && Input::GetMouseButtonUp(MouseButton::RIGHT))
 		{
-			particleInput.strength = 0;
+			particleInput.constantForceStrength = 0;
 		}
 
 		particleInputBuffer.Update(&particleInput);

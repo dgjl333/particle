@@ -12,15 +12,19 @@ RWStructuredBuffer<Particle> particles : register(u1);
 
 cbuffer Data : register(b1)
 {
+    float _ConstantForceStrength;
+    float _Viscosity;
+    float _CurlScale;
+    float _CurlStrength;
+    
     float2 _MousePos;
-    float _ForceStrength;
 };
 
 float2 ConstantForce(float2 p)
 {
     float2 offset = p - _MousePos;
     float distance = length(offset);
-    return 1 / (pow(distance, 2) + 1) * normalize(offset) * _ForceStrength * 500000;
+    return 1 / (pow(distance, 2) + 1) * normalize(offset) * _ConstantForceStrength * 500000;
 }
 
 float2 CurlNoise(float2 p)
