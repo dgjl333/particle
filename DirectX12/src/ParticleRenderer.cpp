@@ -20,6 +20,7 @@
 #include "ConstantBuffer.h"
 #include "Input.h"
 #include "PipelineState.h"
+#include "ParticleManager.h"
 #include "imgui/imgui.h"
 #include "../shader/ParticleData.hlsli"
 
@@ -76,26 +77,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	Shader::SetUpSharedResources(cpuHandle);
 
-	struct Particle
-	{
-		float2 position;
-		float2 velocity;
-	};
-
-	struct ParticleInput
-	{
-		float constantForceStrength;
-		float viscosity;
-		float curlScale;
-		float curlStrength;
-
-		float2 mousePos;
-	};
-
-	ParticleInput particleInput = {};
-	ConstantBuffer particleInputBuffer(&particleInput);
-	particleInputBuffer.Map(nullptr);
-	device->CreateConstantBufferView(&particleInputBuffer.GetView(), cpuHandle.Get());
+	ParticleEffect& particleEffect = ParticleManager::s_particleEffect;
+	ConstantBuffer particleEffectBuffer(&particleEffect);
+	particleEffectBuffer.Map(nullptr);
+	device->CreateConstantBufferView(&particleEffectBuffer.GetView(), cpuHandle.Get());
 
 	int particleCount = (PARTICLE_COUNT / PARTICLE_NUMTHREADS) * PARTICLE_NUMTHREADS;
 
@@ -171,13 +156,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	Shader shader("shader/Mouse.hlsl", Shader::BlendType::Alpha);
 	PipelineState state(rootSignature, shader, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
-	struct MouseEffect
-	{
-		float flash;
-	};
-	MouseEffect effect = {};
+	MouseEffect& mouseEffect = ParticleManager::s_mouseEffect;
 
-	ConstantBuffer mouseEffectBuffer(&effect);
+	ConstantBuffer mouseEffectBuffer(&mouseEffect);
 	mouseEffectBuffer.Map(nullptr);
 	device->CreateConstantBufferView(&mouseEffectBuffer.GetView(), cpuHandle.Increment());
 
@@ -205,39 +186,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		ImGui::PopStyleVar();
 
 		int tableIndex = 1;
-		float2 mousePos = Input::GetMousePosition();
-		if (Input::GetMouseButton(MouseButton::LEFT) || Input::GetMouseButton(MouseButton::RIGHT))
-		{
-			particleInput.mousePos = mousePos;
-			effect.flash = 1;
-		}
-		else
-		{
-			effect.flash = 0;
-		}
-		mouseEffectBuffer.Update(&effect);
-
-		static MouseButton activeButton;
-		if (Input::GetMouseButtonDown(MouseButton::LEFT))
-		{
-			activeButton = MouseButton::LEFT;
-			particleInput.constantForceStrength = 1;
-		}
-		if (activeButton == MouseButton::LEFT && Input::GetMouseButtonUp(MouseButton::LEFT))
-		{
-			particleInput.constantForceStrength = 0;
-		}
-		if (Input::GetMouseButtonDown(MouseButton::RIGHT))
-		{
-			activeButton = MouseButton::RIGHT;
-			particleInput.constantForceStrength = -2;
-		}
-		if (activeButton == MouseButton::RIGHT && Input::GetMouseButtonUp(MouseButton::RIGHT))
-		{
-			particleInput.constantForceStrength = 0;
-		}
-
-		particleInputBuffer.Update(&particleInput);
 
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
@@ -254,6 +202,11 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetPipelineState(particleState.Get());
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);
+
+		float2 mousePos = Input::GetMousePosition();
+		ParticleManager::HandleInputData(mousePos);
+		mouseEffectBuffer.Update(&mouseEffect);
+		particleEffectBuffer.Update(&particleEffect);
 
 		if (!GUI::IsCursorShown() && GUI::IsCursorInsideClient())
 		{
@@ -281,7 +234,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 	}
 	Renderer::Destroy();
 	Window::Destroy();
-	return 0;
 }
 
 

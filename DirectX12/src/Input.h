@@ -5,7 +5,7 @@
 
 enum class MouseButton
 {
-	LEFT, RIGHT, MIDDLE
+	LEFT, RIGHT, MIDDLE, None
 };
 
 class Input

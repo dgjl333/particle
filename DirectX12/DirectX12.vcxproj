@@ -170,6 +170,7 @@
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\ParticleManager.cpp" />
     <ClCompile Include="src\ParticleRenderer.cpp" />
     <ClCompile Include="src\PipelineState.cpp" />
     <ClCompile Include="src\Random.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="src\MathType.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\ParticleManager.h" />
     <ClInclude Include="src\PipelineState.h" />
     <ClInclude Include="src\Random.h" />
     <ClInclude Include="src\Renderer.h" />

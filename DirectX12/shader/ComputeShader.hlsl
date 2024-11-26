@@ -41,12 +41,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     
     float t = _Time.y * 0.5;
     
-    float2 curl = CurlNoise(p.position * s_noiseScale + _Seed * 1000);
-    p.velocity += curl * _DeltaTime * s_noiseStrength;
+    float2 curl = CurlNoise(p.position * _CurlScale + _Seed * 1000);
+    p.velocity += curl * _DeltaTime * _CurlStrength;
     p.velocity += ConstantForce(p.position) * _DeltaTime * 7.5;
     p.velocity.y += 0.5 * (sin(t) + 0.2 * cos(t + cos(2 * t + 1)));
 
-    float drag = s_viscosity * length(p.velocity) * _DeltaTime;
+    float drag = _Viscosity * length(p.velocity) * _DeltaTime;
     p.velocity *= max(1 - drag, 0);
     
     p.position += p.velocity * _DeltaTime;
