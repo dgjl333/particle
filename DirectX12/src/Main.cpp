@@ -1,6 +1,6 @@
 #include "ParticleRenderer.h"
 
-int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPCSTR, int)
 {
 	ParticleRenderer renderer;
 }
