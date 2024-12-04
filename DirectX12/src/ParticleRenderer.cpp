@@ -1,5 +1,5 @@
+#include "ParticleRenderer.h"
 #include "Debug.h"
-#include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
@@ -26,7 +26,7 @@
 
 using namespace DirectX;
 
-int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
+ParticleRenderer::ParticleRenderer()
 {
 #ifdef _DEBUG
 	EnableDebug();
@@ -174,16 +174,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		cmdList->SetDescriptorHeaps(1, descriptor.GetHeapAddress());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		ImGui::SetNextWindowPos({(float)Window::GetWidth(),0}, ImGuiCond_Once, {1,0});
-		ImGui::SetNextWindowSize({ (float)Window::GetWidth() * 0.1f, (float)Window::GetHeight() }, ImGuiCond_FirstUseEver);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoMove);
-
 		ParticleManager::DrawInspector();
 		
-		ImGui::End();
-		ImGui::PopStyleVar();
-
 		int tableIndex = 1;
 
 		cmdList->SetComputeRootSignature(rootSignature.Get());
@@ -206,7 +198,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		ParticleManager::HandleInputData(mousePos);
 		mouseEffectBuffer.Update(&mouseEffect);
 		particleEffectBuffer.Update(&particleEffect);
-		//ImGui::ShowDemoWindow();
 
 		if (!GUI::IsCursorShown() && GUI::IsCursorInsideClient())
 		{
@@ -232,9 +223,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		Renderer::Render();
 		Input::ClearStates();
 	}
+}
+
+ParticleRenderer::~ParticleRenderer()
+{
 	Renderer::Destroy();
 	Window::Destroy();
 }
-
-
-

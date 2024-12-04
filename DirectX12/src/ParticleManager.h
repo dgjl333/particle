@@ -10,10 +10,10 @@ struct Particle
 
 struct ParticleEffect
 {
-	float viscosity;
+	float drag;
 	float curlScale;
 	float curlStrength;
-	float turbulenceStrength;
+	float turbulence;
 
 	float2 mousePos;
 	float currentMouseForceStrength;

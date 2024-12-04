@@ -30,7 +30,6 @@ struct Particle
 
 StructuredBuffer<Particle> particles : register(t1);
 
-
 float2 ComputeScreenPos(float4 pos)
 {
     float2 xy = (pos.xy + pos.w) * 0.5;
@@ -80,7 +79,6 @@ void geom(point v2g input[1], inout TriangleStream<g2f> stream)
     
     stream.RestartStrip();
 }
-
 
 float3 hsl2rgb(float3 c)
 {

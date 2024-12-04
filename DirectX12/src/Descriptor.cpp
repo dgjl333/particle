@@ -9,7 +9,7 @@ Descriptor::Descriptor(UINT numDescriptors, const std::vector<int>& rootArgument
 	D3D12_DESCRIPTOR_HEAP_DESC  HeapDesc = {};
 	HeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	HeapDesc.NodeMask = 0;
-	HeapDesc.NumDescriptors = numDescriptors;  //num of cbv_srv_uav total amount
+	HeapDesc.NumDescriptors = numDescriptors;  //cbv_srv_uav total amount
 	HeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
 	GraphicDevice::GetDevice()->CreateDescriptorHeap(&HeapDesc, IID_PPV_ARGS(&m_heap));

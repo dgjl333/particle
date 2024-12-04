@@ -2,12 +2,13 @@
 #include "Time.h"
 #include <algorithm>
 #include "imgui/imgui.h"
+#include "Window.h"
 
 ParticleEffect ParticleManager::s_particleEffect = {
-	.viscosity = 2.3f,
+	.drag = 2.3f,
 	.curlScale = 5.0f,
 	.curlStrength = 7.5f,
-	.turbulenceStrength = 5.0f,
+	.turbulence = 5.0f,
 
 	.mousePos = {0.0f, 0.0f},       
 	.currentMouseForceStrength = 0.0f,   
@@ -78,10 +79,18 @@ void ParticleManager::ClearState()
 
 void ParticleManager::DrawInspector()
 {
+	ImGui::SetNextWindowPos({ (float)Window::GetWidth(),0 }, ImGuiCond_Once, { 1,0 });
+	ImGui::SetNextWindowSize({ (float)Window::GetWidth() * 0.15f, (float)Window::GetHeight() }, ImGuiCond_FirstUseEver);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::Begin("Property", nullptr, ImGuiWindowFlags_NoMove);
+
 	ImGui::SliderFloat("Noise Scale", &s_particleEffect.curlScale, 1.0f, 10.0f);
 	ImGui::SliderFloat("Noise Strength", &s_particleEffect.curlStrength, 0.0f, 20.0f);
-	ImGui::SliderFloat("Viscosity", &s_particleEffect.viscosity, 0.0f, 5.0f);
-	ImGui::SliderFloat("Turbulence", &s_particleEffect.turbulenceStrength, 0.0f, 10.0f);
+	ImGui::SliderFloat("Drag", &s_particleEffect.drag, 0.0f, 5.0f);
+	ImGui::SliderFloat("Turbulence", &s_particleEffect.turbulence, 0.0f, 10.0f);
+	ImGui::Separator();
+	ImGui::SliderFloat("Mouse Strength", &s_mouseTargetForceStrength, 0.0f, 5.0f);
 
-	ImGui::SliderFloat("Mouse Strength", &s_mouseTargetForceStrength, 0.0f, 3.0f);
+	ImGui::End();
+	ImGui::PopStyleVar();
 }
