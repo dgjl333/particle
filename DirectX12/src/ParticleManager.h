@@ -10,12 +10,13 @@ struct Particle
 
 struct ParticleEffect
 {
-	float constantForceStrength;
 	float viscosity;
 	float curlScale;
 	float curlStrength;
+	float turbulenceStrength;
 
 	float2 mousePos;
+	float currentMouseForceStrength;
 };
 
 struct MouseEffect
@@ -31,10 +32,12 @@ public:
 
 	static void HandleInputData(float2 mousePos);
 
+	static void DrawInspector();
+
 private:
 	inline static const float s_smoothTime = 1.25;
 
-	static float s_targetForceStrength;
+	static float s_mouseTargetForceStrength;
 	static float s_passedTime;
 	static MouseButton s_activeButton;
 

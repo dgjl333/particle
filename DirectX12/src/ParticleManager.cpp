@@ -1,18 +1,21 @@
 #include "ParticleManager.h"
 #include "Time.h"
 #include <algorithm>
+#include "imgui/imgui.h"
 
 ParticleEffect ParticleManager::s_particleEffect = {
-	.constantForceStrength = 0.0f,   
-	.viscosity = 0.025f,
-	.curlScale = 0.005f,
-	.curlStrength = 75.0f,
-	.mousePos = {0.0f, 0.0f}         
+	.viscosity = 2.3f,
+	.curlScale = 5.0f,
+	.curlStrength = 7.5f,
+	.turbulenceStrength = 5.0f,
+
+	.mousePos = {0.0f, 0.0f},       
+	.currentMouseForceStrength = 0.0f,   
 };
 
 MouseEffect ParticleManager::s_mouseEffect = {};
 
-float ParticleManager::s_targetForceStrength = 1.0f;
+float ParticleManager::s_mouseTargetForceStrength = 1.0f;
 float ParticleManager::s_passedTime = 0.0f;
 MouseButton ParticleManager::s_activeButton = MouseButton::None;
 
@@ -41,7 +44,7 @@ void ParticleManager::HandleInputData(float2 mousePos)
 	}
 	else if (s_activeButton == MouseButton::LEFT)
 	{
-		UpdateStrength(s_targetForceStrength);
+		UpdateStrength(s_mouseTargetForceStrength);
 
 		if (Input::GetMouseButtonUp(MouseButton::LEFT))
 		{
@@ -50,7 +53,7 @@ void ParticleManager::HandleInputData(float2 mousePos)
 	}
 	else if (s_activeButton == MouseButton::RIGHT)
 	{
-		UpdateStrength(-2 * s_targetForceStrength);
+		UpdateStrength(-2 * s_mouseTargetForceStrength);
 
 		if (Input::GetMouseButtonUp(MouseButton::RIGHT))
 		{
@@ -63,12 +66,22 @@ void ParticleManager::UpdateStrength(float targetStrength)
 {
 	s_passedTime += Time::GetDeltaTime();
 	float progress = std::clamp(s_passedTime / s_smoothTime, 0.0f, 1.0f);
-	s_particleEffect.constantForceStrength = std::lerp(0, targetStrength, progress);
+	s_particleEffect.currentMouseForceStrength = std::lerp(0, targetStrength, progress);
 }
 
 void ParticleManager::ClearState()
 {
-	s_particleEffect.constantForceStrength = 0;
+	s_particleEffect.currentMouseForceStrength = 0;
 	s_passedTime = 0;
 	s_activeButton = MouseButton::None;
+}
+
+void ParticleManager::DrawInspector()
+{
+	ImGui::SliderFloat("Noise Scale", &s_particleEffect.curlScale, 1.0f, 10.0f);
+	ImGui::SliderFloat("Noise Strength", &s_particleEffect.curlStrength, 0.0f, 20.0f);
+	ImGui::SliderFloat("Viscosity", &s_particleEffect.viscosity, 0.0f, 5.0f);
+	ImGui::SliderFloat("Turbulence", &s_particleEffect.turbulenceStrength, 0.0f, 10.0f);
+
+	ImGui::SliderFloat("Mouse Strength", &s_mouseTargetForceStrength, 0.0f, 3.0f);
 }

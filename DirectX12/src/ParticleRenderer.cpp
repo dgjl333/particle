@@ -41,14 +41,11 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 	Random::Init();
 	GraphicDevice::Init();
+	Window::Init();
+	GUI::Init();
+	Renderer::Init();
 
 	ID3D12Device* device = GraphicDevice::GetDevice();
-
-	Window::Init();
-
-	GUI::Init();
-
-	Renderer::Init();
 	ID3D12GraphicsCommandList* cmdList = Renderer::GetCommandList();
 
 	std::vector<Vertex> vertices = {
@@ -181,6 +178,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		ImGui::SetNextWindowSize({ (float)Window::GetWidth() * 0.1f, (float)Window::GetHeight() }, ImGuiCond_FirstUseEver);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 		ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoMove);
+
+		ParticleManager::DrawInspector();
 		
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -207,6 +206,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 		ParticleManager::HandleInputData(mousePos);
 		mouseEffectBuffer.Update(&mouseEffect);
 		particleEffectBuffer.Update(&particleEffect);
+		//ImGui::ShowDemoWindow();
 
 		if (!GUI::IsCursorShown() && GUI::IsCursorInsideClient())
 		{
