@@ -3,7 +3,6 @@
 #include "GUI.h"
 #include "Input.h"
 #include "imgui/imgui_impl_win32.h"
-#include "MathType.h"
 #include <windowsx.h>
 #include <format>
 
@@ -12,8 +11,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lParam)
 {
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lParam)) return true;
-
-
 
 	switch (msg)
 	{
@@ -52,8 +49,17 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lPara
 
 void Window::Init()
 {
-	s_height = GetSystemMetrics(SM_CYFULLSCREEN);
-	s_width = GetSystemMetrics(SM_CXFULLSCREEN);
+	POINT cursorPos;
+	GetCursorPos(&cursorPos);
+	HMONITOR hMonitor = MonitorFromPoint(cursorPos, MONITOR_DEFAULTTONEAREST);
+
+	MONITORINFOEXA monitorInfo = {};
+	monitorInfo.cbSize = sizeof(MONITORINFOEXA);
+
+	GetMonitorInfoA(hMonitor, &monitorInfo);
+	
+	s_width = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+	s_height = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
 
 	s_wc.cbSize = sizeof(WNDCLASSEX);
 	s_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
@@ -63,7 +69,7 @@ void Window::Init()
 	RECT rect = { 0, 0, s_width, s_height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 	
-	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Particle", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, s_wc.hInstance, nullptr);
+	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Particle", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, s_width, s_height, nullptr, nullptr, s_wc.hInstance, nullptr);
 
 	if (s_hwnd == NULL)
 	{
@@ -74,8 +80,24 @@ void Window::Init()
 	LONG style = GetWindowLong(s_hwnd, GWL_STYLE);
 	style &= ~WS_THICKFRAME;      // Remove the resize
 	SetWindowLong(s_hwnd, GWL_STYLE, style);
-
+	
 	ShowWindow(s_hwnd, SW_SHOWMAXIMIZED);
+	
+	HMONITOR monitor = MonitorFromWindow(NULL, MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFOEX info = { sizeof(MONITORINFOEX) };
+	GetMonitorInfo(monitor, &info);
+	DEVMODE devmode = {};
+	devmode.dmSize = sizeof(DEVMODE);
+	EnumDisplaySettings(info.szDevice, ENUM_CURRENT_SETTINGS, &devmode);
+
+	s_physicalWidth = devmode.dmPelsWidth;
+	s_physicalHeight = devmode.dmPelsHeight;
+
+	RECT clientRect;
+	GetClientRect(Window::GetHWND(), &clientRect);
+	
+	s_dpiScale.x = (clientRect.right - clientRect.left) / (float)devmode.dmPelsWidth;
+	s_dpiScale.y = (clientRect.bottom - clientRect.top) / (float)devmode.dmPelsHeight;
 }
 
 bool Window::Update()
@@ -104,4 +126,7 @@ WNDCLASSEX Window::s_wc = {};
 HWND Window::s_hwnd = {};
 MSG Window::s_msg = {};
 int Window::s_width = 0;
+int Window::s_physicalWidth = 0;
 int Window::s_height = 0;
+int Window::s_physicalHeight = 0;
+float2 Window::s_dpiScale;

@@ -25,11 +25,11 @@ public:
 
 	static bool GetMouseButtonUp(MouseButton button) { return s_mouseEnterUp[(int)button]; }
 
-	static float2 GetMousePosition() { return s_mousePos; }
+	static float2 GetMouseWorldPos() { return s_mouseWorldPos; }
 
 private:
 	static std::array<bool, mouseButton_count> s_mouseDown;
 	static std::array<bool, mouseButton_count> s_mouseEnterDown;
 	static std::array<bool, mouseButton_count> s_mouseEnterUp;
-	static float2 s_mousePos;
+	static float2 s_mouseWorldPos;
 };

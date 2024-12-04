@@ -48,6 +48,7 @@ void Shader::ErrorCheck(const std::string& errorShader, const HRESULT& compileRe
 			print(errorShader, (char*)errorBlob->GetBufferPointer());
 			errorBlob->Release();
 		}
+		std::cin.get();
 		exit(1);
 	}
 }
@@ -58,8 +59,8 @@ std::unique_ptr<ConstantBuffer<Shader::SharedInput>> Shader::s_constantBuffer = 
 void Shader::SetUpSharedResources(Descriptor::CPUHandle& cpuHandle)
 {
 	DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
-	matrix.r[0].m128_f32[0] = 2.0f / Window::GetWidth();
-	matrix.r[1].m128_f32[1] = 2.0f / Window::GetHeight();
+	matrix.r[0].m128_f32[0] = 2.0f / Window::GetPhysicalWidth();
+	matrix.r[1].m128_f32[1] = 2.0f / Window::GetPhysicalHeight();
 	matrix.r[3].m128_f32[0] = -1.0f;
 	matrix.r[3].m128_f32[1] = -1.0f;
 

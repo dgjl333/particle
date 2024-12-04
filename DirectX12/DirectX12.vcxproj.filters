@@ -187,23 +187,21 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Font Include="assets\font\ARIAL.TTF" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="include\DirectXTex\DirectXTex.inl">
       <Filter>ヘッダー ファイル</Filter>
     </None>
-    <None Include="shader\CommonInput.hlsli" />
-    <None Include="shader\ParticleData.hlsli" />
-    <None Include="shader\Noise.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\Release\DirectXTex.lib" />
     <Library Include="lib\Debug\DirectXTex.lib" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shader\Mouse.hlsl" />
-    <FxCompile Include="shader\ComputeShader.hlsl" />
-    <FxCompile Include="shader\Particle.hlsl" />
+    <CustomBuild Include="shader\Mouse.hlsl" />
+    <CustomBuild Include="shader\Particle.hlsl" />
+    <CustomBuild Include="shader\ComputeShader.hlsl" />
+    <CustomBuild Include="assets\font\ARIAL.TTF" />
+    <CustomBuild Include="shader\CommonInput.hlsli" />
+    <CustomBuild Include="shader\Noise.hlsli" />
+    <CustomBuild Include="shader\ParticleData.hlsli" />
   </ItemGroup>
 </Project>

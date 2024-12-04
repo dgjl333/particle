@@ -62,7 +62,6 @@ void GUI::Update()
 	else
 	{
 		s_cursorInsideClient = false;
-
 	}
 
 	ImGui_ImplDX12_NewFrame();

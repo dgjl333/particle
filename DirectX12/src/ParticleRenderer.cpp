@@ -85,7 +85,7 @@ ParticleRenderer::ParticleRenderer()
 	for (int i = 0; i < particleCount; i++)
 	{
 		particles[i].velocity = { Random::GetValue() * 100, Random::GetValue() * 100 };
-		particles[i].position = { Random::Range(0.0f, (float)Window::GetWidth()), Random::Range(0.0f, (float)Window::GetHeight()) };
+		particles[i].position = { Random::Range(0.0f, (float)Window::GetPhysicalWidth()), Random::Range(0.0f, (float)Window::GetPhysicalHeight()) };
 	}
 
 	D3D12_RESOURCE_DESC particleDesc = Utils::ResourceDesc(particleCount * sizeof(Particle), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -174,10 +174,7 @@ ParticleRenderer::ParticleRenderer()
 		cmdList->SetDescriptorHeaps(1, descriptor.GetHeapAddress());
 		gpuHandle.ResetToGraphicsRootDescriptorTableStart();
 
-		ParticleManager::DrawInspector();
-		
 		int tableIndex = 1;
-
 		cmdList->SetComputeRootSignature(rootSignature.Get());
 		cmdList->SetPipelineState(computePipeLineState);
 		cmdList->SetComputeRootConstantBufferView(0, Shader::GetSharedConstantBufferGpuAddress());
@@ -194,14 +191,15 @@ ParticleRenderer::ParticleRenderer()
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 		cmdList->DrawInstanced(particleCount, 1, 0, 0);
 
-		float2 mousePos = Input::GetMousePosition();
+		float2 mousePos = Input::GetMouseWorldPos();
 		ParticleManager::HandleInputData(mousePos);
+		ParticleManager::DrawInspector();
 		mouseEffectBuffer.Update(&mouseEffect);
 		particleEffectBuffer.Update(&particleEffect);
 
 		if (!GUI::IsCursorShown() && GUI::IsCursorInsideClient())
 		{
-			const int size = 50;
+			const int size = 65;
 			vertices[0].position = float3(mousePos.x - size, mousePos.y - size, 0);
 			vertices[1].position = float3(mousePos.x + size, mousePos.y - size, 0);
 			vertices[2].position = float3(mousePos.x + size, mousePos.y + size, 0);

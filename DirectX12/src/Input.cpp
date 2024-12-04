@@ -1,10 +1,11 @@
 #include "Input.h"
 #include "imgui/imgui.h"
+#include "Window.h"
 
 std::array<bool, Input::mouseButton_count> Input::s_mouseDown = {false, false, false};
 std::array<bool, Input::mouseButton_count> Input::s_mouseEnterDown = {false, false, false};
 std::array<bool, Input::mouseButton_count> Input::s_mouseEnterUp = {false, false, false};
-float2 Input::s_mousePos;
+float2 Input::s_mouseWorldPos;
 
 void Input::ClearStates()
 {
@@ -35,5 +36,5 @@ void Input::UpdateMouseState(MouseButton button, bool isButtonDown)
 
 void Input::UpdateMousePosition(float2 pos)
 {
-	s_mousePos = pos;
+	s_mouseWorldPos = float2(pos.x / Window::GetDpiScale().x, pos.y / Window::GetDpiScale().y);
 }

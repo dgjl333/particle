@@ -16,7 +16,7 @@ ParticleEffect ParticleManager::s_particleEffect = {
 
 MouseEffect ParticleManager::s_mouseEffect = {};
 
-float ParticleManager::s_mouseTargetForceStrength = 1.0f;
+float ParticleManager::s_mouseTargetForceStrength = 2.0f;
 float ParticleManager::s_passedTime = 0.0f;
 MouseButton ParticleManager::s_activeButton = MouseButton::None;
 
@@ -79,8 +79,10 @@ void ParticleManager::ClearState()
 
 void ParticleManager::DrawInspector()
 {
-	ImGui::SetNextWindowPos({ (float)Window::GetWidth(),0 }, ImGuiCond_Once, { 1,0 });
-	ImGui::SetNextWindowSize({ (float)Window::GetWidth() * 0.15f, (float)Window::GetHeight() }, ImGuiCond_FirstUseEver);
+	ImVec2 workSize = ImGui::GetMainViewport()->WorkSize;
+
+	ImGui::SetNextWindowPos({ workSize.x, 0 }, ImGuiCond_Once, { 1,0 });
+	ImGui::SetNextWindowSize({ workSize.x * 0.15f, workSize.y }, ImGuiCond_FirstUseEver);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::Begin("Property", nullptr, ImGuiWindowFlags_NoMove);
 
