@@ -49,26 +49,15 @@ LRESULT Window::WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lPara
 
 void Window::Init()
 {
-	POINT cursorPos;
-	GetCursorPos(&cursorPos);
-	HMONITOR hMonitor = MonitorFromPoint(cursorPos, MONITOR_DEFAULTTONEAREST);
-
-	MONITORINFOEXA monitorInfo = {};
-	monitorInfo.cbSize = sizeof(MONITORINFOEXA);
-
-	GetMonitorInfoA(hMonitor, &monitorInfo);
-	
-	s_width = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
-	s_height = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+	s_width = GetSystemMetrics(SM_CXFULLSCREEN);
+	s_height = GetSystemMetrics(SM_CYFULLSCREEN);
 
 	s_wc.cbSize = sizeof(WNDCLASSEX);
 	s_wc.lpfnWndProc = (WNDPROC)Window::WindowProcedure;
 	s_wc.lpszClassName = L"DX12";
 	s_wc.hInstance = GetModuleHandle(nullptr);
 	RegisterClassEx(&s_wc);
-	RECT rect = { 0, 0, s_width, s_height };
-	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
-	
+
 	s_hwnd = CreateWindow(s_wc.lpszClassName, L"Particle", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, s_width, s_height, nullptr, nullptr, s_wc.hInstance, nullptr);
 
 	if (s_hwnd == NULL)
