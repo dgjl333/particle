@@ -4,4 +4,7 @@ You should use visual studio to build.
 
 Hold down right mouse button to attract particles, left mouse button to repel.
 
+[https://youtu.be/eE3eA1znGzQ](https://youtu.be/eE3eA1znGzQ)
+
 ![preview](https://github.com/user-attachments/assets/27e9ae4d-30d1-44ef-8372-f140f8144f0d)
+
